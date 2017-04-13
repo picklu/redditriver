@@ -1,26 +1,21 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
-# Peteris Krumins (peter@catonmat.net)
-# http://www.catonmat.net  --  good coders code, great reuse
+# Refactoring Peteris Krumin's redditriver
+# to make that working with current version of python (2.7.11),
+# web.py (0.38) and Cheetah (2.4.4) template engine. 
 #
-# Released under GNU GPL
+# The initial commit contains the full source code of http://redditriver.com website, which
+# is available at http://catonmat.net/blog/designing-redditriver-dot-com-website
 #
-# Developed as a part of redditriver.com project
-# Read how it was designed:
-# http://www.catonmat.net/blog/designing-redditriver-dot-com-website
-#
-
-
-import web
 import sys
 import re
-
+import web
 from datetime import datetime, timedelta
 from time import mktime
 from urlparse import urlparse
-
-sys.path.append(sys.path[0] + '/../config')
-
+if __name__ == '__main__' and __package__ is None:
+    from os import path
+    sys.path.append(path.abspath(path.join(path.dirname(__file__), '..', 'config')))
 import riverconfig as config
 
 urls = (
@@ -42,11 +37,11 @@ web.net.htmlquote = lambda x: x
 
 def get_nice_host(url):
     """ Given a URL, extracts a 'nice' version of host, for example:
-        >>> get_nice_host('http://www.reddit.com') 
+        >>> get_nice_host('http://www.reddit.com')
         'reddit.com'
-        >>> get_nice_host('http://ww2.nba.com') 
+        >>> get_nice_host('http://ww2.nba.com')
         'nba.com'
-        >>> get_nice_host('http://foo.bar.baz/a.html') 
+        >>> get_nice_host('http://foo.bar.baz/a.html')
         'foo.bar.baz' """
 
     parsed_url = urlparse(url)
@@ -140,7 +135,7 @@ class SubRiverStoriesPage(SubRiverStories):
 
     def prev_page(self, subreddit, page):
         if page == 2:
-            return "/r/" + subreddit 
+            return "/r/" + subreddit
         return "/r/" + subreddit + "/page/" + str(page - 1)
 
 class UserStats(object):
@@ -240,7 +235,7 @@ class AboutRiver(object):
 class Stats(object):
     def GET(self):
         user_stats = UserStats(count=10).get()
-        
+
         week_ago = datetime.now() - timedelta(days=7)
         unix_week = int(mktime(week_ago.timetuple()))
         story_stats = StoryStats(time_offset = unix_week, count=15).get()
@@ -257,5 +252,6 @@ class SubStats(object):
             'subreddit': subreddit})
 
 if __name__ == "__main__":
-    web.run(urls, globals(), web.reloader)
+    app = web.application(urls, globals())
+    app.run()
 

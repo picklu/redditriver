@@ -1,28 +1,28 @@
-#!/usr/bin/python
-# 
-# Peteris Krumins (peter@catonmat.net)
-# http://www.catonmat.net  --  good coders code, great reuse
+#!/usr/bin/env python
 #
-# Released under GNU GPL
+# Refactoring Peteris Krumin's redditriver
+# to make that working with current version of python (2.7.11),
+# web.py (0.38) and Cheetah (2.4.4) template engine. 
 #
-# Developed as a part of redditriver.com project
-# Read how it was designed:
-# http://www.catonmat.net/blog/designing-redditriver-dot-com-website
+# The initial commit contains the full source code of http://redditriver.com website, which
+# is available at http://catonmat.net/blog/designing-redditriver-dot-com-website
 #
+from os.path import dirname, abspath, join
+cwdir = dirname(abspath(__file__))
 
 """ This module defines various config values of reddit river project """
 
 # lock directory
 #
-lock_dir = '/home/pkrumins/tests/python/reddit/locks'
+lock_dir = join(cwdir, '..', 'locks')
 
 # path to sqlite database
 #
-database = '/home/pkrumins/tests/python/reddit/db/redditriver.db'
+database = join(cwdir, '..', 'db/redditriver.db')
 
 # path to mobile website autodiscovery config
 #
-autodisc_config = '/home/pkrumins/tests/python/reddit/config/autodisc.conf'
+autodisc_config = join(cwdir, 'autodisc.conf')
 
 # number of subreddit pages to monitor for changes (used by update_subreddits.py)
 #
@@ -39,4 +39,3 @@ default_subreddit = 'front_page'   # front_page is the 'reddit.com' front page
 # stories per page to display on redditriver.com
 #
 stories_per_page = 25
-
