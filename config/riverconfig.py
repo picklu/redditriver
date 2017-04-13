@@ -8,21 +8,22 @@
 # is available at http://catonmat.net/blog/designing-redditriver-dot-com-website
 #
 from os.path import dirname, abspath, join
-cwdir = dirname(abspath(__file__))
+cwdir = dirname(dirname(abspath(__file__)))
+
 
 """ This module defines various config values of reddit river project """
 
 # lock directory
 #
-lock_dir = join(cwdir, '..', 'locks')
+lock_dir = join(cwdir, 'locks')
 
 # path to sqlite database
 #
-database = join(cwdir, '..', 'db/redditriver.db')
+database = join(cwdir, 'db/redditriver.db')
 
 # path to mobile website autodiscovery config
 #
-autodisc_config = join(cwdir, 'autodisc.conf')
+autodisc_config = join(cwdir, 'config/autodisc.conf')
 
 # number of subreddit pages to monitor for changes (used by update_subreddits.py)
 #
