@@ -15,8 +15,10 @@ from time import mktime
 from urlparse import urlparse
 if __name__ == '__main__' and __package__ is None:
     from os import path
-    sys.path.append(path.abspath(path.join(path.dirname(__file__), '..', 'config')))
-import riverconfig as config
+    sys.path.append(path.abspath(path.join(path.dirname(__file__), '..')))
+from config import riverconfig as config
+
+#print >> sys.stderr, "Path: %s" % (sys.path)
 
 urls = (
     '/',                                 'RedditRiver',
@@ -254,4 +256,3 @@ class SubStats(object):
 if __name__ == "__main__":
     app = web.application(urls, globals())
     app.run()
-
