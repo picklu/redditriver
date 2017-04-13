@@ -7,18 +7,17 @@
 # The initial commit contains the full source code of http://redditriver.com website, which
 # is available at http://catonmat.net/blog/designing-redditriver-dot-com-website
 #
-import sys
-import re
-import web
+from os import sys, path
+from web.contrib.template import render_cheetah
 from datetime import datetime, timedelta
 from time import mktime
 from urlparse import urlparse
+import re
+import web
 if __name__ == '__main__' and __package__ is None:
-    from os import path
     sys.path.append(path.abspath(path.join(path.dirname(__file__), '..')))
 from config import riverconfig as config
 
-#print >> sys.stderr, "Path: %s" % (sys.path)
 
 urls = (
     '/',                                 'RedditRiver',
@@ -36,6 +35,8 @@ webdb = web.database(dbn='sqlite', db=config.database)
 
 # no escaping needs to be done as the data we get from reddit is already escaped
 web.net.htmlquote = lambda x: x
+render = render_cheetah(path.abspath(path.join(path.dirname(__file__), 'templates')))
+print >> sys.stderr, "tempaltes: %s" % (path.abspath(path.join(path.dirname(__file__), 'templates')))
 
 def get_nice_host(url):
     """ Given a URL, extracts a 'nice' version of host, for example:
@@ -197,42 +198,65 @@ class StoryStats(object):
 ################
 # page handlers
 ################
-
 class RedditRiver(object):
     def GET(self):
         st = RiverStories()
         story_page = st.get()
-        web.render('stories.tpl.html', story_page)
+        return render.stories_tpl(
+                                  stories=story_page['stories'],
+                                  next_page=story_page['next_page'],
+                                  prev_page=story_page['prev_page'],
+                                  next_page_link=story_page['next_page_link'],
+                                  prev_page_link=story_page['prev_page_link'],
+                                  )
 
 class RedditRiverPage(object):
     def GET(self, page):
         st = RiverStoriesPage(page)
         story_page = st.get()
-        web.render('stories.tpl.html', story_page)
+        return render.stories_tpl(
+                                  stories= story_page['stories'],
+                                  next_page=story_page['next_page'],
+                                  prev_page=story_page['prev_page'],
+                                  next_page_link=story_page['next_page_link'],
+                                  prev_page_link=story_page['prev_page_link'],
+                                  )
 
 class SubRedditRiver(object):
     def GET(self, subreddit):
         st = SubRiverStories(subreddit)
         story_page = st.get()
         story_page['subreddit'] = subreddit
-        web.render('stories.tpl.html', story_page)
+        return render.stories_tpl(
+                                  stories=story_page['stories'],
+                                  next_page=story_page['next_page'],
+                                  prev_page=story_page['prev_page'],
+                                  next_page_link=story_page['next_page_link'],
+                                  prev_page_link=story_page['prev_page_link'],
+                                  )
 
 class SubRedditRiverPage(object):
     def GET(self, subreddit, page):
         st = SubRiverStoriesPage(subreddit, page)
         story_page = st.get()
         story_page['subreddit'] = subreddit
-        web.render('stories.tpl.html', story_page)
+        return render.stories_tpl(
+                                  stories=story_page['stories'],
+                                  next_page=story_page['next_page'],
+                                  prev_page=story_page['prev_page'],
+                                  next_page_link=story_page['next_page_link'],
+                                  prev_page_link=story_page['prev_page_link'],
+                                  )
 
 class SubReddits(object):
     def GET(self):
         subreddits = webdb.query("SELECT * FROM subreddits WHERE id > 0 and active = 1 ORDER by position")
-        web.render('subreddits.tpl.html')
+        return render.subreddits_tpl(subreddits=subreddits)
 
 class AboutRiver(object):
     def GET(self):
         about = True
-        web.render('about.tpl.html')
+        return render.about_tpl()
 
 class Stats(object):
     def GET(self):
@@ -241,7 +265,7 @@ class Stats(object):
         week_ago = datetime.now() - timedelta(days=7)
         unix_week = int(mktime(week_ago.timetuple()))
         story_stats = StoryStats(time_offset = unix_week, count=15).get()
-        web.render('stats.tpl.html', {'user_stats': user_stats, 'story_stats': story_stats})
+        return render.stats_tpl(user_stats=user_stats, story_stats=story_stats)
 
 class SubStats(object):
     def GET(self, subreddit):
@@ -250,8 +274,9 @@ class SubStats(object):
         week_ago = datetime.now() - timedelta(days=7)
         unix_week = int(mktime(week_ago.timetuple()))
         story_stats = StoryStats(time_offset = unix_week, subreddit=subreddit, count=15).get()
-        web.render('stats.tpl.html', {'user_stats': user_stats, 'story_stats': story_stats,
-            'subreddit': subreddit})
+        return render.stats_tpl(user_stats=user_stats, story_stats=story_stats,
+            subreddit=subreddit)
+
 
 if __name__ == "__main__":
     app = web.application(urls, globals())
