@@ -30,7 +30,7 @@ urls = (
 )
 
 web.webapi.internalerror = web.debugerror
-web.config.db_parameters = dict(dbn='sqlite', db=config.database)
+webdb = web.database(dbn='sqlite', db=config.database)
 
 # no escaping needs to be done as the data we get from reddit is already escaped
 web.net.htmlquote = lambda x: x
@@ -70,7 +70,7 @@ class Stories(object):
 
         offset = (self.page - 1) * config.stories_per_page
 
-        # We do a trick here of making a query for + 1 story to see if we
+        # We do a trick here of making a webdb.query for + 1 story to see if we
         # should display the next page link. If we get +1 story, then
         # the next page exists.
         #
@@ -79,7 +79,7 @@ class Stories(object):
 
     def get(self):
         query = self._story_query()
-        tmp_stories = web.query(query)
+        tmp_stories = webdb.query(query)
 
         stories = []
         next_page = prev_page = False
@@ -158,7 +158,7 @@ class UserStats(object):
 
     def get(self):
         query = self._user_query()
-        users = web.query(query)
+        users = webdb.query(query)
         return users
 
 class StoryStats(object):
@@ -183,7 +183,7 @@ class StoryStats(object):
 
     def get(self):
         query = self._story_query()
-        tmp_stories = web.query(query)
+        tmp_stories = webdb.query(query)
         stories = []
         for s in tmp_stories:
             s.host = get_nice_host(s['url'])
@@ -224,7 +224,7 @@ class SubRedditRiverPage(object):
 
 class SubReddits(object):
     def GET(self):
-        subreddits = web.query("SELECT * FROM subreddits WHERE id > 0 and active = 1 ORDER by position")
+        subreddits = webdb.query("SELECT * FROM subreddits WHERE id > 0 and active = 1 ORDER by position")
         web.render('subreddits.tpl.html')
 
 class AboutRiver(object):
