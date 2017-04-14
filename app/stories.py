@@ -111,28 +111,10 @@ class SubRiverStoriesPage(SubRiverStories):
             return "/r/" + subreddit
         return "/r/" + subreddit + "/page/" + str(page - 1)
 
-class UserStats(object):
-    def __init__(self, subreddit=config.default_subreddit, count=10):
-        self.subreddit = subreddit
-        self.count = count
-
-    def _user_query(self):
-        stats_query = ("SELECT COUNT(st.user) stories, st.user user "
-                       "FROM stories st "
-                       "LEFT JOIN subreddits su "
-                       "ON st.subreddit_id = su.id "
-                       "WHERE su.reddit_name = '%s' "
-                       "GROUP BY user "
-                       "ORDER BY stories DESC "
-                       "LIMIT %d ")
-
-        query = stats_query % (self.subreddit, self.count)
-        return query
-
+class SubRivers(object):
     def get(self):
-        query = self._user_query()
-        users = webdb.query(query)
-        return users
+        subreddits = webdb.query("SELECT * FROM subreddits WHERE id > 0 and active = 1 ORDER by position")
+        return subreddits
 
 class StoryStats(object):
     def __init__(self, time_offset, subreddit=config.default_subreddit, count=10):
@@ -163,3 +145,29 @@ class StoryStats(object):
             s.niceago = web.datestr(datetime.fromtimestamp(s['date_reddit']), datetime.now())
             stories.append(s)
         return stories
+
+class UserStats(object):
+    def __init__(self, subreddit=config.default_subreddit, count=10):
+        self.subreddit = subreddit
+        self.count = count
+
+    def _user_query(self):
+        stats_query = ("SELECT COUNT(st.user) stories, st.user user "
+                       "FROM stories st "
+                       "LEFT JOIN subreddits su "
+                       "ON st.subreddit_id = su.id "
+                       "WHERE su.reddit_name = '%s' "
+                       "GROUP BY user "
+                       "ORDER BY stories DESC "
+                       "LIMIT %d ")
+
+        query = stats_query % (self.subreddit, self.count)
+        return query
+
+    def get(self):
+        week_ago = datetime.now() - timedelta(days=7)
+        unix_week = int(mktime(week_ago.timetuple()))
+        story_stats = StoryStats(time_offset = unix_week, subreddit=self.subreddit, count=15).get()
+        query = self._user_query()
+        user_stats = webdb.query(query)
+        return (user_stats, story_stats)
