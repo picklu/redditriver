@@ -1,7 +1,7 @@
 Refactoring Peteris Krumin's redditriver
 ========================================
 to make that working with current version of python (2.7.11),
-web.py (0.37) and Cheetah (2.4.4) template engine. 
+web.py (0.38) and Cheetah (2.4.4) template engine. 
 
 The initial commit contains the full source code of http://redditriver.com website, which
 is available at http://catonmat.net/blog/designing-redditriver-dot-com-website
