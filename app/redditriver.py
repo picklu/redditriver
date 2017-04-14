@@ -7,15 +7,17 @@
 # The initial commit contains the full source code of http://redditriver.com website, which
 # is available at http://catonmat.net/blog/designing-redditriver-dot-com-website
 #
-from os import sys, path
+from os import sys, path, chdir
 from web.contrib.template import render_cheetah
 from datetime import datetime, timedelta
 from time import mktime
 from urlparse import urlparse
 import re
 import web
+cwd = path.dirname(path.abspath(__file__))
+chdir(cwd)
 if __name__ == '__main__' and __package__ is None:
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    sys.path.append(path.dirname(cwd))
 from config import riverconfig as config
 
 
@@ -35,7 +37,7 @@ webdb = web.database(dbn='sqlite', db=config.database)
 
 # no escaping needs to be done as the data we get from reddit is already escaped
 web.net.htmlquote = lambda x: x
-render = render_cheetah(path.join(path.dirname(path.abspath(__file__)), 'templates'))
+render = render_cheetah(path.join(cwd, 'templates'))
 
 def get_nice_host(url):
     """ Given a URL, extracts a 'nice' version of host, for example:
