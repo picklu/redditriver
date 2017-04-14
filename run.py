@@ -2,5 +2,5 @@
 from app import *
 
 if __name__ == "__main__":
-    app = web.application(urls, globals())
+    app = application(urls, globals())
     app.run()

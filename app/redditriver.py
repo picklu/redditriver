@@ -11,16 +11,14 @@ from os import sys, path, chdir
 cwd = path.dirname(path.abspath(__file__))
 chdir(cwd) # change the path to the directory of this file
 from web.contrib.template import render_cheetah
-import web
-from datetime import datetime, timedelta
-from time import mktime
+from web import webapi, debugerror, application, net
 from stories import RiverStories
 from stories import RiverStoriesPage
 from stories import SubRiverStories
 from stories import SubRiverStoriesPage
 from stories import UserStats
 from stories import StoryStats
-from stories import webdb
+from stories import SubRivers
 
 
 urls = (
@@ -34,10 +32,10 @@ urls = (
     '/about/?',                          'AboutRiver'
 )
 
-web.webapi.internalerror = web.debugerror
+webapi.internalerror = debugerror
 
 # no escaping needs to be done as the data we get from reddit is already escaped
-web.net.htmlquote = lambda x: x
+net.htmlquote = lambda x: x
 render = render_cheetah(path.join(cwd, 'templates'))
 
 ################
@@ -71,7 +69,8 @@ class SubRedditRiverPage(object):
 
 class SubReddits(object):
     def GET(self):
-        subreddits = webdb.query("SELECT * FROM subreddits WHERE id > 0 and active = 1 ORDER by position")
+        st = SubRivers()
+        subreddits = st.get()
         return render.subreddits_tpl(subreddits=subreddits)
 
 class AboutRiver(object):
@@ -80,24 +79,16 @@ class AboutRiver(object):
 
 class Stats(object):
     def GET(self):
-        user_stats = UserStats(count=10).get()
-
-        week_ago = datetime.now() - timedelta(days=7)
-        unix_week = int(mktime(week_ago.timetuple()))
-        story_stats = StoryStats(time_offset = unix_week, count=15).get()
+        user_stats, story_stats = UserStats(count=10).get()
         return render.stats_tpl(user_stats=user_stats, story_stats=story_stats)
 
 class SubStats(object):
     def GET(self, subreddit):
-        user_stats = UserStats(subreddit, count=10).get()
-
-        week_ago = datetime.now() - timedelta(days=7)
-        unix_week = int(mktime(week_ago.timetuple()))
-        story_stats = StoryStats(time_offset = unix_week, subreddit=subreddit, count=15).get()
+        user_stats, story_stats = UserStats(subreddit, count=10).get()
         return render.stats_tpl(user_stats=user_stats, story_stats=story_stats,
             subreddit=subreddit)
 
 
 if __name__ == "__main__":
-    app = web.application(urls, globals())
+    app = application(urls, globals())
     app.run()
