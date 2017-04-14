@@ -203,51 +203,27 @@ class RedditRiver(object):
     def GET(self):
         st = RiverStories()
         story_page = st.get()
-        return render.stories_tpl(
-                                  stories=story_page['stories'],
-                                  next_page=story_page['next_page'],
-                                  prev_page=story_page['prev_page'],
-                                  next_page_link=story_page['next_page_link'],
-                                  prev_page_link=story_page['prev_page_link'],
-                                  )
+        return render.stories_tpl(**story_page)
 
 class RedditRiverPage(object):
     def GET(self, page):
         st = RiverStoriesPage(page)
         story_page = st.get()
-        return render.stories_tpl(
-                                  stories= story_page['stories'],
-                                  next_page=story_page['next_page'],
-                                  prev_page=story_page['prev_page'],
-                                  next_page_link=story_page['next_page_link'],
-                                  prev_page_link=story_page['prev_page_link'],
-                                  )
+        return render.stories_tpl(**story_page)
 
 class SubRedditRiver(object):
     def GET(self, subreddit):
         st = SubRiverStories(subreddit)
         story_page = st.get()
         story_page['subreddit'] = subreddit
-        return render.stories_tpl(
-                                  stories=story_page['stories'],
-                                  next_page=story_page['next_page'],
-                                  prev_page=story_page['prev_page'],
-                                  next_page_link=story_page['next_page_link'],
-                                  prev_page_link=story_page['prev_page_link'],
-                                  )
+        return render.stories_tpl(**story_page)
 
 class SubRedditRiverPage(object):
     def GET(self, subreddit, page):
         st = SubRiverStoriesPage(subreddit, page)
         story_page = st.get()
         story_page['subreddit'] = subreddit
-        return render.stories_tpl(
-                                  stories=story_page['stories'],
-                                  next_page=story_page['next_page'],
-                                  prev_page=story_page['prev_page'],
-                                  next_page_link=story_page['next_page_link'],
-                                  prev_page_link=story_page['prev_page_link'],
-                                  )
+        return render.stories_tpl(**story_page)
 
 class SubReddits(object):
     def GET(self):
