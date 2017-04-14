@@ -2,7 +2,7 @@
 #
 # Refactoring Peteris Krumin's redditriver
 # to make that working with current version of python (2.7.11),
-# web.py (0.38) and Cheetah (2.4.4) template engine. 
+# web.py (0.38) and Cheetah (2.4.4) template engine.
 #
 # The initial commit contains the full source code of http://redditriver.com website, which
 # is available at http://catonmat.net/blog/designing-redditriver-dot-com-website
@@ -12,13 +12,7 @@ cwd = path.dirname(path.abspath(__file__))
 chdir(cwd) # change the path to the directory of this file
 from web.contrib.template import render_cheetah
 from web import webapi, debugerror, application, net
-from stories import RiverStories
-from stories import RiverStoriesPage
-from stories import SubRiverStories
-from stories import SubRiverStoriesPage
-from stories import UserStats
-from stories import StoryStats
-from stories import SubRivers
+import stories
 
 
 urls = (
@@ -43,33 +37,33 @@ render = render_cheetah(path.join(cwd, 'templates'))
 ################
 class RedditRiver(object):
     def GET(self):
-        st = RiverStories()
+        st = stories.RiverStories()
         story_page = st.get()
         return render.stories_tpl(**story_page)
 
 class RedditRiverPage(object):
     def GET(self, page):
-        st = RiverStoriesPage(page)
+        st = stories.RiverStoriesPage(page)
         story_page = st.get()
         return render.stories_tpl(**story_page)
 
 class SubRedditRiver(object):
     def GET(self, subreddit):
-        st = SubRiverStories(subreddit)
+        st = stories.SubRiverStories(subreddit)
         story_page = st.get()
         story_page['subreddit'] = subreddit
         return render.stories_tpl(**story_page)
 
 class SubRedditRiverPage(object):
     def GET(self, subreddit, page):
-        st = SubRiverStoriesPage(subreddit, page)
+        st = stories.SubRiverStoriesPage(subreddit, page)
         story_page = st.get()
         story_page['subreddit'] = subreddit
         return render.stories_tpl(**story_page)
 
 class SubReddits(object):
     def GET(self):
-        st = SubRivers()
+        st = stories.SubRivers()
         subreddits = st.get()
         return render.subreddits_tpl(subreddits=subreddits)
 
@@ -79,12 +73,12 @@ class AboutRiver(object):
 
 class Stats(object):
     def GET(self):
-        user_stats, story_stats = UserStats(count=10).get()
+        user_stats, story_stats = stories.UserStats(count=10).get()
         return render.stats_tpl(user_stats=user_stats, story_stats=story_stats)
 
 class SubStats(object):
     def GET(self, subreddit):
-        user_stats, story_stats = UserStats(subreddit, count=10).get()
+        user_stats, story_stats = stories.UserStats(subreddit, count=10).get()
         return render.stats_tpl(user_stats=user_stats, story_stats=story_stats,
             subreddit=subreddit)
 
