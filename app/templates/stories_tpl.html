@@ -1,4 +1,4 @@
-#include "common_header_tpl.html"
+#include "templates/common_header_tpl.html"
  #if $next_page or $prev_page
   <p class="more">view more: 
    #if $prev_page
@@ -13,9 +13,12 @@
   </p>
  #end if
 
- #for story in $stories
-  #include "individual_story_tpl.html"
- #end for
+ #if $varExists('stories')
+    #for $s in $stories
+        #set global $story = $s
+        #include "templates/individual_story_tpl.html"
+    #end for
+ #end if
 
  #if $next_page or $prev_page
   <p class="more">view more: 
@@ -30,4 +33,4 @@
    #end if
   </p>
  #end if
-#include "common_footer_tpl.html"
+#include "templates/common_footer_tpl.html"
