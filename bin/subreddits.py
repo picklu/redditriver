@@ -1,5 +1,5 @@
-#!/usr/bin/python
-# 
+#!/usr/bin/env python2
+#
 # Peteris Krumins (peter@catonmat.net)
 # http://www.catonmat.net  --  good coders code, great reuse
 #
@@ -12,14 +12,15 @@
 
 import re
 import sys
+import time
 import socket
 import urllib2
 from BeautifulSoup import BeautifulSoup
 
 version = "1.0"
 
-reddit_url = 'http://reddit.com'
-subreddits_url = 'http://reddit.com/reddits'
+reddit_url = 'https://www.reddit.com'
+subreddits_url = 'https://www.reddit.com/reddits'
 
 socket.setdefaulttimeout(30)
 
@@ -43,8 +44,8 @@ def get_subreddits(pages=1, new=False):
      * description, description of a subreddit, for example,
                      'Yeah reddit, you finally got it. Context appreciated.'
      * subscribers, number of subscribers, for example, 10682"""
-     
-    srs = [] 
+
+    srs = []
     url = subreddits_url
     if new: url += '/new'
     position = 1
@@ -63,12 +64,12 @@ def get_subreddits(pages=1, new=False):
 
 def _extract_subreddits(content):
     """Given an HTML page, extracts all the subreddits and returns a list of dicts of them.
-    
+
     See the 'html.examples/subreddit.entry.txt' for an example how HTML of an entry looks like"""
 
     subreddits = []
     soup = BeautifulSoup(content)
-    entries = soup.findAll('div', id=re.compile('entry_.*'))
+    entries = soup.findAll('div', id=re.compile('entry *'))
     for entry in entries:
         divs = entry.findAll('div')
         if len(divs) < 2 or len(divs) > 3:
@@ -129,8 +130,10 @@ def _extract_subreddits(content):
 def _get_page(url):
     """ Gets and returns a web page at url """
 
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    uagent = 'picklus redditriver: 0.1({})'.format(timestr)
     request = urllib2.Request(url)
-    request.add_header('User-Agent', 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)')
+    request.add_header('User-Agent', uagent)
 
     try:
         response = urllib2.urlopen(request)
@@ -155,10 +158,10 @@ def print_subreddits_paragraph(srs):
      reddit_name: subreddit's short name (reddit_name)
      description: subreddit's description (description)
      subscribers: number of subscribers (subscribers)
-     
+
      ...
     """
-    
+
     for item in srs:
         print 'position:', item['position']
         print 'name:', item['name']
