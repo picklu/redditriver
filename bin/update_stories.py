@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 #
 # Peteris Krumins (peter@catonmat.net)
 # http://www.catonmat.net  --  good coders code, great reuse
@@ -55,14 +55,14 @@ autodiscdebug = False
 # How big is infinity? Suppose that there are 10000 new stories on reddit daily which
 # hit the front page. If the infinity is a billion (1000000000), then it would take
 # 1000000000 / 10000 = 100000 days or 273 years to overflow this number.
-# 
+#
 infinity_position = 1000000000
 
 def main():
     conn = sqlite.connect(database=config.database, timeout=10)
     conn.row_factory = sqlite.Row
     cur = conn.cursor()
-    
+
     cur.execute("SELECT id, reddit_name FROM subreddits WHERE active = 1")
     subreddits = cur.fetchall()
 
@@ -96,7 +96,7 @@ def main():
                     swap_id = cur.execute("SELECT id FROM stories WHERE subreddit_id = ? AND position = ?",
                         (subreddit['id'], position)).fetchone()[0]
                     cur.execute("UPDATE stories SET position = ? WHERE id = ?",
-                        (story['position'], existing_row['id'])) 
+                        (story['position'], existing_row['id']))
                     cur.execute("UPDATE stories SET position = ? WHERE id = ?",
                         (existing_row['position'], swap_id))
                     conn.commit()
@@ -126,7 +126,7 @@ def main():
             if story_at_pos:
                 id = story_at_pos[0]
                 cur.execute("UPDATE stories SET position = ? WHERE id = ?", (infinity_position, id))
-            
+
             cur.execute("INSERT INTO stories (title, url, url_mobile, reddit_id, subreddit_id, "
                         "score, comments, user, position, date_reddit, date_added) "
                         "VALUES (:title, :url, :url_mobile, :id, :subreddit_id, :score, "

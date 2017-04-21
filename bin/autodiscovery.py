@@ -1,5 +1,5 @@
-#!/usr/bin/python
-# 
+#!/usr/bin/env python2
+#
 # Peteris Krumins (peter@catonmat.net)
 # http://www.catonmat.net  --  good coders code, great reuse
 #
@@ -75,7 +75,7 @@ class AutoDiscovery(object):
                     command, data = re.split(r'\s+|\t+', line, 1)
                 except ValueError:
                     raise AutoDiscoveryError, ("Unknown line: '%s' while parsing '%s'" % (line, config_file))
-                
+
                 if command not in AutoDiscovery.dispatchers:
                     raise AutoDiscoveryError, "Config command '%s' not found" % command
 
@@ -86,7 +86,7 @@ class AutoDiscovery(object):
 
     def _print_link(self, data):
         """
-        PRINT_LINK config directive parser. 
+        PRINT_LINK config directive parser.
         Installs a lookup method to search a page for 'print page',
         'print this article', etc. links
         """
@@ -115,7 +115,7 @@ class AutoDiscovery(object):
                     return m.group('href').replace('&amp;', '&')
 
                 return None
-            
+
             ok_starts_with = ['http://', '/', '../', './', '?']
             try:
                 for ok in ok_starts_with:
@@ -154,7 +154,7 @@ class AutoDiscovery(object):
                 return False
             print_link_lookup.make_sense = make_sense
             return print_link_lookup
-       
+
         # this is not nice, we are adding the same function for each string
         # TODO: add one function which loops over all strings, rather than
         # a function for each sting
@@ -162,10 +162,10 @@ class AutoDiscovery(object):
 
     def _rewrite_url(self, data):
         """
-        REWRITE_URL config directive parser. 
+        REWRITE_URL config directive parser.
         Installs an URL rewriter.
         """
-        
+
         try:
             host_re, from_re, to_re = re.split(r'\s+|\t+', data)
         except ValueError:
@@ -196,7 +196,7 @@ class AutoDiscovery(object):
                 return True
 
         self.ignores.append(ignore)
-    
+
     def autodiscover(self, url):
         """
         Given a url, autodiscover mobile version of the url
@@ -245,9 +245,9 @@ class AutoDiscovery(object):
                         return None
                 else:
                     href = tag['href']
-            
+
                 return urlparse.urljoin(url, href)
-        
+
         return None
 
     def _get_page(self, url):

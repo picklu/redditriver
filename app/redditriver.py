@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 # Refactoring Peteris Krumin's redditriver
 # to make that working with current version of python (2.7.11),

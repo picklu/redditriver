@@ -1,5 +1,5 @@
-#!/usr/bin/python
-# 
+#!/usr/bin/env python2
+#
 # Peteris Krumins (peter@catonmat.net)
 # http://www.catonmat.net  --  good coders code, great reuse
 #
@@ -39,9 +39,9 @@ def get_stories(subreddit="front_page", pages=1, new=False):
     and returns a list of dictionaries of stories.
 
     If new is True, gets new stories at http://reddit.com/new or
-    http://reddit.com/r/subreddit/new""" 
+    http://reddit.com/r/subreddit/new"""
 
-    stories = [] 
+    stories = []
     if subreddit == "front_page":
         url = reddit_url
     else:
@@ -65,7 +65,7 @@ def get_stories(subreddit="front_page", pages=1, new=False):
 
 def _extract_stories(content):
     """Given an HTML page, extracts all the stories and returns a list of dicts of them.
-    
+
     See the 'html.examples/story.entry.txt' for an example how HTML of an entry looks like"""
 
     stories = []
@@ -102,7 +102,7 @@ def _extract_stories(content):
             score = int(m.group(1))
         else: # for just posted links
             score = 0 # TODO: when this is merged into module, use redditscore to get the actual score
-       
+
         user_a = div_little.find(lambda tag: tag.name == 'a' and tag['href'].startswith('/user/'))
         if not user_a:
             user = '(deleted)'
@@ -192,7 +192,7 @@ def _get_next_page(content):
 
 def print_stories_paragraph(stories):
     """ Given a list of dictionaries of stories, prints them out paragraph at a time. """
-    
+
     for story in stories:
         print 'position:', story['position']
         print 'subreddit:', story['subreddit']
@@ -225,7 +225,7 @@ if __name__ == '__main__':
                       default=1, help="How many pages of stories to output. Default: 1.")
     parser.add_option("-s", action="store", dest="subreddit", default="front_page",
                       help="Subreddit to retrieve stories from. Default: front_page.")
-    parser.add_option("-n", action="store_true", dest="new", 
+    parser.add_option("-n", action="store_true", dest="new",
                       help="Retrieve new stories. Default: nope.")
     options, args = parser.parse_args()
 
