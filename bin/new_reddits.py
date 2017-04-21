@@ -2,28 +2,41 @@
 # -*- coding: utf-8 -*-
 import sys
 import time
-import wget
 import json
+import requests
 
 
 def get_reddits(url, output = "new-reddits.json"):
+    """ Accepts an url to download a json file
+    returns full path of the downloaded file
+    """
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    return wget.download(url, "-".join([timestr,output]))
+    headers = {'User-agent': 'mincklu-bot: {}'.format(timestr)}
+    
+    # get data from url
+    r = requests.get(url, headers = headers)
+    
+    # return text file if the response is ok; none otherwise
+    return r.text if r.ok else None
 
 def read_reddits(jsonfile):
-    with open(jsonfile, "r") as f:
-        data = json.loads(f.read())
+    """ Reads reddits from the jsonfile
+    """
+    if jsonfile:
+        data = json.loads(jsonfile)
+    else:
+        sys.exit("Failed load reddits!")
 
     if "data" not in data.keys():
+        print ""
         for key, value in data.items():
-            print ""
             print "{}: {}".format(key, value)
         return
     
-    data = loaded_data["data"]
+    data = data["data"]
     if "children" not in data.keys():
+        print ""
         for key, value in data.items():
-            print ""
             print "{}: {}".format(key, value)
         return 
     
@@ -31,6 +44,12 @@ def read_reddits(jsonfile):
     
     if reddits:
         for reddit in reddits:
+            if "data" not in reddit.keys():
+                print ""
+                for key, value in reddit.items():
+                    print "{}: {}".format(key, value)
+                return
+        
             edata = reddit["data"]
             print "*******************************************"
             print "*******************************************"
