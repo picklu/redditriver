@@ -15,12 +15,13 @@ import sys
 import time
 import socket
 import urllib2
-from BeautifulSoup import BeautifulSoup
+from BeautifulSoup import BeautifulSoup as bs
 
 version = "1.0"
 
 reddit_url = 'https://www.reddit.com'
-subreddits_url = 'https://www.reddit.com/reddits'
+#subreddits_url = 'https://www.reddit.com/reddits'
+subreddits_url = 'http://localhost:8080/subreddit.entry.new.html'
 
 socket.setdefaulttimeout(30)
 
@@ -32,10 +33,10 @@ class SubRedditError(Exception):
     """ An exception class thrown when something serious happened """
 
 def get_subreddits(pages=1, new=False):
-    """ Goes to http://reddit.com/reddits, finds all subreddits
+    """ Goes to https://www.reddit.com/reddits, finds all subreddits
     accross 'pages' pages and returns a list of dictionaries of subreddits.
 
-    If new is True, gets new subreddits at http://reddit.com/reddits/new
+    If new is True, gets new subreddits at https://www.reddit.com/reddits/new
 
     Each dictionary contains the following key, value pairs:
      * position, position subreddit appears on subreddit page, for example, 12
@@ -51,7 +52,11 @@ def get_subreddits(pages=1, new=False):
     position = 1
     for i in range(pages):
         content = _get_page(url)
-        entries = _extract_subreddits(content)
+        try:
+            entries = _extract_subreddits(content)
+        except:
+            exit("There was something wrong!")
+        
         for entry in entries:
             entry['position'] = position
             position += 1
@@ -68,57 +73,39 @@ def _extract_subreddits(content):
     See the 'html.examples/subreddit.entry.txt' for an example how HTML of an entry looks like"""
 
     subreddits = []
-    soup = BeautifulSoup(content)
-    entries = soup.findAll('div', id=re.compile('entry *'))
+    name = reddit_name = description = subscribers = ""
+    soup = bs(content)
+    entries = soup.findAll('div', {'class': re.compile('entry *')})
+    if not entries:
+        raise RedesignError, "'div' tag a class 'entry' not found!"
+    
     for entry in entries:
-        divs = entry.findAll('div')
-        if len(divs) < 2 or len(divs) > 3:
-            raise RedesignError, "Less than 2 or more than 3 divs per subreddit entry"
-
-        # If anyone reads this code, I'd be happy if you gave me a mail to
-        # peter@catonmat.net and explained how else could I have parsed this
-        #
-
-        name_div = divs[0]
-        desc_div = None
-        subsc_div = None
-        if len(divs) == 3:
-            desc_div, subsc_div = divs[1:]
-        else:
-            subsc_div = divs[1]
-
-        name_a = name_div.find('a')
-        if not name_a:
-            raise RedesignError, "'a' tag was not found in subreddit's name"
-
-        name = name_a.string
-
-        try:
-            name_href = name_a['href']
-        except KeyError:
-            raise RedesignError, "Name's 'a' tag did not have a 'href' attribute"
-
-        m = re.search('/r/(.+)/', name_href)
-        if not m:
-            raise RedesignError, "Name's 'a' href did not contain subreddit's short name"
-
-        reddit_name = m.group(1)
-
-        desc = ""
-        if desc_div:
-            desc = desc_div.string
-
-        subsc_span = subsc_div.find('span');
-        if not subsc_span:
-            raise RedesignError, "Subscriber information did not contain the expected span tag"
-
-        subscs = subsc_span.string
-        m = re.search(r'(\d+) subscriber', subscs);
-        if not m:
-            raise RedesignError, "Subscriber string did not contain subscriber count"
-
-        subscs = int(m.group(1))
-
+        
+        title_row = entry.find('p', {'class': 'titlerow'})
+        if not title_row:
+            raise RedesignError, "'p' tag with a class 'titlerow' not found!"
+        
+        print "Title Row => ", title_row
+        reddit_entry = title_row.find('a')
+        if not reddit_entry:
+            raise RedesignError, "'a' tag was not found in the ttilerow!"
+        
+        print reddit_entry
+        return
+        reddit_name, name = reddit_entry.split(":")
+        
+        description_entry = entry.find('div', {'class': 'md'})
+        if not description_entry:
+            raise RedesignError, "'div' tag for description was not found!"
+        
+        description = description_entry.text
+        
+        subscribers_entry = entry.find('span', {'class': 'score likes'})
+        if not subscribers_entry:
+            raise RedesignError, "'span' tag for subscribers info was not found!"
+        
+        subscribers = subscribers_entry.find('span', {'class': 'number'})
+        
         subreddits.append({
             'name': name.encode('utf8'),
             'reddit_name': reddit_name.encode('utf8'),
