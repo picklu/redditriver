@@ -20,8 +20,8 @@ from BeautifulSoup import BeautifulSoup as bs
 version = "1.0"
 
 reddit_url = 'https://www.reddit.com'
-#subreddits_url = 'https://www.reddit.com/reddits'
-subreddits_url = 'http://localhost:8080/subreddit.entry.new.html'
+subreddits_url = 'https://www.reddit.com/reddits'
+#subreddits_url = 'http://ubuntu-picklu.cs50.io/subreddit.entry.new.html'
 
 socket.setdefaulttimeout(30)
 
@@ -31,6 +31,7 @@ class RedesignError(Exception):
 
 class SubRedditError(Exception):
     """ An exception class thrown when something serious happened """
+    pass
 
 def get_subreddits(pages=1, new=False):
     """ Goes to https://www.reddit.com/reddits, finds all subreddits
@@ -54,8 +55,8 @@ def get_subreddits(pages=1, new=False):
         content = _get_page(url)
         try:
             entries = _extract_subreddits(content)
-        except:
-            exit("There was something wrong!")
+        except Exception, e:
+            sys.exit("ERROR: %s" %e)
         
         for entry in entries:
             entry['position'] = position
@@ -77,40 +78,41 @@ def _extract_subreddits(content):
     soup = bs(content)
     entries = soup.findAll('div', {'class': re.compile('entry *')})
     if not entries:
-        raise RedesignError, "'div' tag a class 'entry' not found!"
+        raise RedesignError("<div> tag a class 'entry' not found!")
     
     for entry in entries:
         
         title_row = entry.find('p', {'class': 'titlerow'})
         if not title_row:
-            raise RedesignError, "'p' tag with a class 'titlerow' not found!"
+            raise RedesignError("<p> tag with a class 'titlerow' not found!")
         
-        print "Title Row => ", title_row
-        reddit_entry = title_row.find('a')
-        if not reddit_entry:
-            raise RedesignError, "'a' tag was not found in the ttilerow!"
-        
-        print reddit_entry
-        return
-        reddit_name, name = reddit_entry.split(":")
+        reddit_entry = title_row.text
+        if ":" not in reddit_entry:
+            raise RedesignError("title was not found in the titlerow!")
+        # found the name and the reddit name
+        reddit_name, name = reddit_entry.split(":", 1)
         
         description_entry = entry.find('div', {'class': 'md'})
         if not description_entry:
-            raise RedesignError, "'div' tag for description was not found!"
-        
+            raise RedesignError("<div> tag for description was not found!")
+        # found description of the reddit
         description = description_entry.text
         
         subscribers_entry = entry.find('span', {'class': 'score likes'})
         if not subscribers_entry:
-            raise RedesignError, "'span' tag for subscribers info was not found!"
+            raise RedesignError("<span> tag for subscribers info was not found!")
         
-        subscribers = subscribers_entry.find('span', {'class': 'number'})
+        subscribers_number = subscribers_entry.find('span', {'class': 'number'})
+        if not subscribers_number:
+            raise RedesignError("<span> tag for subscribers info was not found!")
+        # found subscribers    
+        subscribers = subscribers_number.text
         
         subreddits.append({
-            'name': name.encode('utf8'),
-            'reddit_name': reddit_name.encode('utf8'),
-            'description': desc.encode('utf8'),
-            'subscribers': subscs})
+            'name': name,
+            'reddit_name': reddit_name[2:],
+            'description': description,
+            'subscribers': subscribers})
 
     return subreddits
 
@@ -125,16 +127,16 @@ def _get_page(url):
     try:
         response = urllib2.urlopen(request)
         content = response.read()
-    except (urllib2.HTTPError, urllib2.URLError, socket.error, socket.sslerror), e:
-        raise SubRedditError, e
+    except (urllib2.HTTPError, urllib2.URLError, socket.error, socket.sslerror) as e:
+        raise SubRedditError(e)
 
     return content
 
 def _get_next_page(content):
-    soup = BeautifulSoup(content)
-    a = soup.find(lambda tag: tag.name == 'a' and tag.string == 'next')
+    soup = bs(content)
+    a = soup.find('a', {'rel': 'nofollow next'})
     if a:
-        return reddit_url + a['href']
+        return str(a['href'])
 
 def print_subreddits_paragraph(srs):
     """ Given a list of dictionaries of subreddits (srs), prints them out
@@ -188,10 +190,10 @@ if __name__ == '__main__':
 
     try:
         srs = get_subreddits(options.pages, options.new)
-    except RedesignError, e:
+    except RedesignError as e:
         print >>sys.stderr, "Reddit has redesigned! %s!" % e
         sys.exit(1)
-    except StoryError, e:
+    except SubRedditError as e:
         print >>sys.stderr, "Serious error: %s!" % e
         sys.exit(1)
 
