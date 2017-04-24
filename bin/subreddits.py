@@ -56,11 +56,7 @@ def get_subreddits(pages=1, new=False):
 
     for i in range(pages):
         content = _get_page(url)
-        try:
-            entries = _extract_subreddits(content)
-        except Exception as e:
-            sys.exit("ERROR: %s" % e)
-
+        entries = _extract_subreddits(content)
         for entry in entries:
             entry['position'] = position
             position += 1
@@ -97,7 +93,7 @@ def _extract_subreddits(content):
 
         description_entry = entry.find('div', {'class': 'description'})
         if not description_entry:
-            description = "No description for this reddit!" # description may not be available
+            description = ""
         else:
             description = description_entry.text
 
