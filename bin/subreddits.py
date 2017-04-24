@@ -35,7 +35,7 @@ class SubRedditError(Exception):
     pass
 
 
-def get_subreddits(pages=1, new_reddits=False):
+def get_subreddits(pages=1, new=False):
     """ Goes to https://www.reddit.com/reddits, finds all subreddits
     accross 'pages' pages and returns a list of dictionaries of subreddits.
 
@@ -51,7 +51,7 @@ def get_subreddits(pages=1, new_reddits=False):
 
     srs = []
     url = subreddits_url
-    if new_reddits: url += '/new'
+    if new: url += '/new'
     position = 1
 
     for i in range(pages):
@@ -75,7 +75,7 @@ def get_subreddits(pages=1, new_reddits=False):
 def _extract_subreddits(content):
     """Given an HTML page, extracts all the subreddits and returns a list of dicts of them.
 
-    See the 'html.examples/subreddit.entry.new.txt' for an example how HTML of an entry looks like"""
+    See the 'html.examples/subreddit.entry.new.html' for an example how HTML of an entry looks like"""
 
     subreddits = []
     name = reddit_name = description = subscribers = ""
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     parser.add_option(
         "-n",
         action="store_true",
-        dest="new_reddits",
+        dest="new",
         help="Retrieve new subreddits. Default: nope.")
     options, args = parser.parse_args()
 
@@ -217,7 +217,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     try:
-        srs = get_subreddits(options.pages, options.new_reddits)
+        srs = get_subreddits(options.pages, options.new)
     except RedesignError as e:
         print >> sys.stderr, "Reddit has redesigned! %s!" % e
         sys.exit(1)
