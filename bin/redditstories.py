@@ -16,12 +16,13 @@ import time
 import socket
 import urllib2
 import datetime
+import dateutil.parser as dtp
 from BeautifulSoup import BeautifulSoup
 
-version = "1.0"
+version = "2.0"
 
-reddit_url = 'http://reddit.com'
-subreddit_url = 'http://reddit.com/r'
+reddit_url = 'https://www.reddit.com'
+subreddit_url = 'https://www.reddit.com/r'
 
 socket.setdefaulttimeout(30)
 
@@ -34,12 +35,12 @@ class StoryError(Exception):
     pass
 
 def get_stories(subreddit="front_page", pages=1, new=False):
-    """ If subreddit front_page, goes to http://reddit.com, otherwise goes to
-    http://reddit.com/r/subreddit. Finds all stories accross 'pages' pages
+    """ If subreddit front_page, goes to https://www.reddit.com, otherwise goes to
+    https://www.reddit.com/r/subreddit. Finds all stories accross 'pages' pages
     and returns a list of dictionaries of stories.
 
-    If new is True, gets new stories at http://reddit.com/new or
-    http://reddit.com/r/subreddit/new"""
+    If new is True, gets new stories at https:www.//reddit.com/new or
+    https://www.reddit.com/r/subreddit/new"""
 
     stories = []
     if subreddit == "front_page":
@@ -50,13 +51,13 @@ def get_stories(subreddit="front_page", pages=1, new=False):
     position = 1
     for i in range(pages):
         content = _get_page(url)
-        entries = _extract_stories(content)
-        stories.extend(entries)
-        for story in stories:
+        new_stories = _extract_stories(content)
+        for story in new_stories:
             story['url'] = story['url'].replace('&amp;', '&')
             story['position'] = position
             story['subreddit'] = subreddit
             position += 1
+        stories.extend(new_stories)
         url = _get_next_page(content)
         if not url:
             break
@@ -66,75 +67,71 @@ def get_stories(subreddit="front_page", pages=1, new=False):
 def _extract_stories(content):
     """Given an HTML page, extracts all the stories and returns a list of dicts of them.
 
-    See the 'html.examples/story.entry.txt' for an example how HTML of an entry looks like"""
+    See the 'html.examples/story.entry.html' for an example how HTML of an entry looks like"""
 
     stories = []
     soup = BeautifulSoup(content)
-    entries = soup.findAll('div', id=re.compile('entry_.*'))
+    entries = soup.findAll('div', {'class': re.compile('entry *')})
     for entry in entries:
-        div_title = entry.find('div', id=re.compile('titlerow_.*'));
-        if not div_title:
-            raise RedesignError, "titlerow div was not found"
+        p_title = entry.find('p', {'class': re.compile('title *')});
+        if not p_title:
+            raise RedesignError("title <p> tag was not found")
 
-        div_little = entry.find('div', attrs={'class': 'little'});
-        if not div_little:
-            raise RedesignError, "little div was not found"
+        a_title = p_title.find('a', {'class': re.compile('title *')})
+        if not a_title:
+            raise RedesignError("title <a> tag was not found")
 
-        title_a = div_title.find('a', id=re.compile('title_.*'))
-        if not title_a:
-            raise RedesignError, "title a was not found"
-
-        m = re.search(r'title_t\d_(.+)', title_a['id'])
-        if not m:
-            raise RedesignError, "title did not contain a reddit id"
-
-        id = m.group(1)
-        title = title_a.string.strip()
-        url = title_a['href']
+        title = a_title.text
+        url = a_title['href']
         if url.startswith('/'): # link to reddit itself
-            url = 'http://reddit.com' + url
+            url = reddit_url + url
+            
+        div_reportform = entry.find('div', {'class': re.compile('reportform report-t3_*')})
+        if not div_reportform:
+            raise RedesignError("reportform <div> tag was not found")
+        
+        m = re.search(r'reportform report-t3_(.+)', div_reportform['class'])
+        if not m:
+            raise RedesignError("a reddit id was not found")
+        
+        id = m.group(1)
 
-        score_span = div_little.find('span', id=re.compile('score_.*'))
-        if score_span:
-            m = re.search(r'(\d+) point', score_span.string)
-            if not m:
-                raise RedesignError, "unable to extract score"
-            score = int(m.group(1))
-        else: # for just posted links
-            score = 0 # TODO: when this is merged into module, use redditscore to get the actual score
+        # there is no score span in the reddit story page
+        score = 0
+        
+        p_tagline = entry.find('p', {'class': 'tagline'});
+        if not p_tagline:
+            raise RedesignError("tagline <p> tag was not found")
 
-        user_a = div_little.find(lambda tag: tag.name == 'a' and tag['href'].startswith('/user/'))
-        if not user_a:
-            user = '(deleted)'
-        else:
-            m = re.search('/user/(.+)/', user_a['href'])
-            if not m:
-                raise RedesignError, "user 'a' tag did not contain href in format /user/(.+)/"
+        a_author = p_tagline.find('a', {'class': re.compile('author *')})
+        if not a_author:
+            raise RedesignError("user 'a' tag was not found")
+        
+        user = a_author.text
+        
+        time_posted = p_tagline.find('time', {'class': 'live-timestamp'})
+        if not time_posted:
+            raise RedesignError("posted ago <time> tag was not found")
 
-            user = m.group(1)
+        posted_at = time_posted["datetime"]
+        if not posted_at:
+            raise RedesignError("unable to extract story date")
+        
+        try:
+            unix_time, human_time = _to_unix(posted_at)
+        except Exception as e:
+            raise RedesignError("Not a valid date-time. %s" %e)
 
-        posted_re = re.compile("posted(?:&nbsp;|\s)+(.+)(?:&nbsp;|\s)+ago") # funny nbsps
-        posted_text = div_little.find(text = posted_re)
-        if not posted_text:
-            raise RedesignError, "posted ago text was not found"
+        a_comment = entry.find('a', {'class': re.compile('bylink comments *')})
+        if not a_comment:
+            raise RedesignError("no comment 'a' tag was found")
 
-        m = posted_re.search(posted_text);
-        posted_ago = m.group(1)
-        unix_time = _ago_to_unix(posted_ago)
-        if not unix_time:
-            raise RedesignError, "unable to extract story date"
-        human_time = time.ctime(unix_time)
-
-        comment_a = div_little.find(lambda tag: tag.name == 'a' and tag['href'].endswith('/comments/'))
-        if not comment_a:
-            raise RedesignError, "no comment 'a' tag was found"
-
-        if comment_a.string == "comment":
+        if a_comment.text == "comment":
             comments = 0
         else:
-            m = re.search(r'(\d+) comment', comment_a.string)
+            m = re.search(r'(\d+) comment', a_comment.text)
             if not m:
-                raise RedesignError, "comment could could not be extracted"
+                raise RedesignError("comment could could not be extracted")
             comments = int(m.group(1))
 
         stories.append({
@@ -149,46 +146,34 @@ def _extract_stories(content):
 
     return stories
 
-def _ago_to_unix(ago):
-    m = re.search(r'(\d+) (\w+)', ago, re.IGNORECASE)
-    if not m:
-        return 0
-
-    delta = int(m.group(1))
-    units = m.group(2)
-
-    if not units.endswith('s'): # singular
-        units += 's' # append 's' to make it plural
-
-    if units == "months":
-        units = "days"
-        delta *= 30        # lets take 30 days in a month
-    elif units == "years":
-        units = "days"
-        delta *= 365
-
-    dt = datetime.datetime.now() - datetime.timedelta(**{units: delta})
-    return int(time.mktime(dt.timetuple()))
+def _to_unix(postedat):
+    dt = dtp.parse(postedat)
+    unix_time = int(time.mktime(dt.timetuple()))
+    human_time = time.ctime(unix_time)
+    return (unix_time, human_time)
 
 def _get_page(url):
     """ Gets and returns a web page at url """
 
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    uagent = 'picklus redditriver: 0.1({})'.format(timestr)
     request = urllib2.Request(url)
-    request.add_header('User-Agent', 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)')
+    request.add_header('User-Agent', uagent)
 
     try:
         response = urllib2.urlopen(request)
         content = response.read()
-    except (urllib2.HTTPError, urllib2.URLError, socket.error, socket.sslerror), e:
-        raise StoryError, e
+    except (urllib2.HTTPError, urllib2.URLError, socket.error,
+            socket.sslerror) as e:
+        raise StoryError(e)
 
     return content
 
 def _get_next_page(content):
     soup = BeautifulSoup(content)
-    a = soup.find(lambda tag: tag.name == 'a' and tag.string == 'next')
+    a = soup.find('a', {'rel': 'nofollow next'})
     if a:
-        return reddit_url + a['href']
+        return str(a['href'])
 
 def print_stories_paragraph(stories):
     """ Given a list of dictionaries of stories, prints them out paragraph at a time. """
@@ -215,18 +200,32 @@ def print_stories_json(stories):
 if __name__ == '__main__':
     from optparse import OptionParser
 
-    description = "A program by Peteris Krumins (http://www.catonmat.net)"
+    description = """A program by Peteris Krumins (http://www.catonmat.net)
+    - upgraded by Subrata Sarker <subrata_sarker@yahoo.com>"""
     usage = "%prog [options]"
 
     parser = OptionParser(description=description, usage=usage)
-    parser.add_option("-o", action="store", dest="output", default="paragraph",
-                      help="Output format: paragraph or json. Default: paragraph.")
-    parser.add_option("-p", action="store", type="int", dest="pages",
-                      default=1, help="How many pages of stories to output. Default: 1.")
-    parser.add_option("-s", action="store", dest="subreddit", default="front_page",
-                      help="Subreddit to retrieve stories from. Default: front_page.")
-    parser.add_option("-n", action="store_true", dest="new",
-                      help="Retrieve new stories. Default: nope.")
+    parser.add_option(
+        "-o", 
+        action="store", 
+        dest="output", 
+        default="paragraph",
+        help="Output format: paragraph or json. Default: paragraph.")
+    parser.add_option("-p", 
+        action="store", 
+        type="int", 
+        dest="pages",
+        default=1, 
+        help="How many pages of stories to output. Default: 1.")
+    parser.add_option("-s", 
+        action="store", 
+        dest="subreddit", 
+        default="front_page",
+        help="Subreddit to retrieve stories from. Default: front_page.")
+    parser.add_option("-n", 
+        action="store_true", 
+        dest="new",
+        help="Retrieve new stories. Default: nope.")
     options, args = parser.parse_args()
 
     output_printers = { 'paragraph': print_stories_paragraph,
@@ -246,4 +245,3 @@ if __name__ == '__main__':
         sys.exit(1)
 
     output_printers[options.output](stories)
-
