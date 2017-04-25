@@ -16,20 +16,21 @@ of a page at a given URL.
 
 Throws an AutoDiscoveryError in case of a fatal error.
 """
-
+from os import sys, path, chdir
+cwd = path.dirname(path.abspath(__file__))
+chdir(cwd) # change the path to the directory of this file
+sys.path.append(path.dirname(cwd))
 import re
-import sys
+import time
 import socket
 import urllib2
 import urlparse
 from BeautifulSoup import BeautifulSoup, NavigableString
-
-sys.path.append(sys.path[0] + '/../config')
-import riverconfig as config
+from config import riverconfig as config
 
 socket.setdefaulttimeout(15)
 
-version = "1.0"
+version = "2.0"
 
 class AutoDiscoveryError(Exception):
     """ Exception which this module might throw. """
@@ -252,14 +253,16 @@ class AutoDiscovery(object):
 
     def _get_page(self, url):
         """ Gets and returns a web page at url """
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        uagent = 'picklus redditriver: 0.1({})'.format(timestr)
         request = urllib2.Request(url)
-        request.add_header('User-Agent', 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)')
+        request.add_header('User-Agent', uagent)
 
         try:
             content = urllib2.urlopen(request)
             return content.read()
         except (urllib2.HTTPError, urllib2.URLError, socket.error, socket.sslerror), e:
-            raise AutoDiscoveryError, e
+            raise AutoDiscoveryError(e)
 
 
 if __name__ == "__main__":

@@ -61,6 +61,7 @@ infinity_position = 1000000000
 def main():
     conn = sqlite.connect(database=config.database, timeout=10)
     conn.row_factory = sqlite.Row
+    conn.text_factory = str
     cur = conn.cursor()
 
     cur.execute("SELECT id, reddit_name FROM subreddits WHERE active = 1")
