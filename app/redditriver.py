@@ -10,6 +10,7 @@
 from os import sys, path, chdir
 cwd = path.dirname(path.abspath(__file__))
 chdir(cwd) # change the path to the directory of this file
+sys.path.append(path.dirname(cwd))
 from web.contrib.template import render_cheetah
 from web import webapi, debugerror, application, net
 import stories
