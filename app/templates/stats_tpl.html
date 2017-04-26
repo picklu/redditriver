@@ -1,8 +1,9 @@
 #include "templates/common_header_tpl.html"
 
 <p class="stats">past week's top #if $varExists('subreddit') then $subreddit else ''# stories:</p>
-#for story in $story_stats
- #include "templates/individual_story_tpl.html"
+#for s in $story_stats
+    #set global $story = $s
+    #include "templates/individual_story_tpl.html"
 #end for
 
 <p class="stats">all time top #if $varExists('subreddit') then $subreddit else ''# redditers (based on data in redditriver's database):</p>
