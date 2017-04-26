@@ -12,7 +12,7 @@ cwd = path.dirname(path.abspath(__file__))
 chdir(cwd) # change the path to the directory of this file
 sys.path.append(path.dirname(cwd))
 from web.contrib.template import render_cheetah
-from web import webapi, debugerror, application, net
+from web import webapi, debugerror, application, net, httpserver
 import stories
 
 
@@ -83,7 +83,12 @@ class SubStats(object):
         return render.stats_tpl(user_stats=user_stats, story_stats=story_stats,
             subreddit=subreddit)
 
+class MyApplication(application):
+        def run(self, port=8080, *middleware):
+            func = self.wsgifunc(*middleware)
+            return httpserver.runsimple(func, ('0.0.0.0', port))
+
 
 if __name__ == "__main__":
-    app = application(urls, globals())
-    app.run()
+    app = MyApplication(urls, globals())
+    app.run(port=8081)
