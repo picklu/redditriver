@@ -97,7 +97,7 @@ def _extract_stories(content):
         id = m.group(1)
 
         # there is no score span in the reddit story page
-        score = 0
+        # score = 0
         
         p_tagline = entry.find('p', {'class': 'tagline'});
         if not p_tagline:
@@ -138,7 +138,7 @@ def _extract_stories(content):
             'id': id.encode('utf8'),
             'title': title.encode('utf8'),
             'url': url.encode('utf8'),
-            'score': score,
+            'score': comments, # score is not available in stories
             'comments': comments,
             'user': user.encode('utf8'),
             'unix_time': unix_time,
