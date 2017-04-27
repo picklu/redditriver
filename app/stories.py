@@ -32,7 +32,7 @@ class Stories(object):
 
     def _story_query(self):
         story_query = ("SELECT st.title title, st.url url, st.url_mobile url_mobile, "
-                       "st.score score, st.comments comments, st.user user, "
+                       "st.comments comments, st.user user, "
                        "st.date_reddit date_reddit "
                        "FROM stories st "
                        "LEFT JOIN subreddits su "
@@ -183,13 +183,13 @@ class StoryStats(object):
 
     def _story_query(self):
         stats_query = ("SELECT st.title title, st.url url, st.url_mobile url_mobile, "
-                       "st.score score, st.comments comments, st.user user, "
+                       "st.comments comments, st.user user, "
                        "st.date_reddit date_reddit "
                        "FROM stories st "
                        "LEFT JOIN subreddits su "
                        "ON st.subreddit_id = su.id "
                        "WHERE su.reddit_name = '%s' AND st.date_reddit >= %d "
-                       "ORDER BY st.score DESC "
+                       "ORDER BY st.date_reddit DESC "
                        "LIMIT %d ")
 
         query = stats_query % (self.subreddit, self.time_offset, self.count)

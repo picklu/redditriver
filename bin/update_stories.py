@@ -90,8 +90,8 @@ def main():
             existing_row = cur.fetchone()
             if existing_row:
                 updated_stories += 1
-                cur.execute("UPDATE stories SET score = ?, comments = ? WHERE id = ?",
-                    (story['score'], story['comments'], existing_row['id']))
+                cur.execute("UPDATE stories SET comments = ? WHERE id = ?",
+                    (story['comments'], existing_row['id']))
                 if existing_row['position'] != story['position']:
                     # swap both positions to maintain consistency of positions
                     swap_id = cur.execute("SELECT id FROM stories WHERE subreddit_id = ? AND position = ?",
@@ -129,8 +129,8 @@ def main():
                 cur.execute("UPDATE stories SET position = ? WHERE id = ?", (infinity_position, id))
 
             cur.execute("INSERT INTO stories (title, url, url_mobile, reddit_id, subreddit_id, "
-                        "score, comments, user, position, date_reddit, date_added) "
-                        "VALUES (:title, :url, :url_mobile, :id, :subreddit_id, :score, "
+                        "comments, user, position, date_reddit, date_added) "
+                        "VALUES (:title, :url, :url_mobile, :id, :subreddit_id, "
                         ":comments, :user, :position, :unix_time, :date_added)",
                         story)
             new_stories += 1
@@ -157,4 +157,3 @@ if __name__ == "__main__":
         autodiscdebug = True
 
     main()
-
