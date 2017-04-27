@@ -112,10 +112,68 @@ class SubRiverStoriesPage(SubRiverStories):
             return "/r/" + subreddit
         return "/r/" + subreddit + "/page/" + str(page - 1)
 
-class SubRivers(object):
+class Rivers(object):
+    def __init__(self, page):
+        self.page = int(page)
+        if self.page == 0: self.page = 1
+        if self.page > sys.maxint: self.page = 1
+    
+    def _river_query(self):
+        river_query = ("SELECT * FROM subreddits WHERE id > 0 and active = 1 "
+                       "ORDER by position "
+                       "LIMIT %d "
+                       "OFFSET %d")
+
+        offset = (self.page - 1) * config.subreddits_per_page
+
+        # We do a trick here of making a webdb.query for + 1 story to see if we
+        # should display the next page link. If we get +1 story, then
+        # the next page exists.
+        #
+        query = (river_query % (config.subreddits_per_page + 1, offset))
+        return query
+        
     def get(self):
-        subreddits = webdb.query("SELECT * FROM subreddits WHERE id > 0 and active = 1 ORDER by position")
-        return subreddits
+        query = self._river_query()
+        tmp_rivers = webdb.query(query)
+
+        rivers = []
+        next_page = prev_page = False
+        for idx, s in enumerate(tmp_rivers):
+            if idx >= config.subreddits_per_page:
+                next_page = True
+                break
+            rivers.append(s)
+
+        if self.page != 1:
+            prev_page = True
+
+        next_page_link = prev_page_link = None
+        if next_page:
+            next_page_link = self.next_page(self.page)
+        if prev_page:
+            prev_page_link = self.prev_page(self.page)
+
+        return {'subreddits': rivers,
+                'next_page': next_page,
+                'prev_page': prev_page,
+                'next_page_link': next_page_link,
+                'prev_page_link': prev_page_link}
+
+class SubRivers(Rivers):
+    def __init__(self, page=1):
+        super(SubRivers, self).__init__(page)
+
+    def next_page(self, page):
+        return "/reddits/page/" + str(page + 1)
+
+class SubRiversPage(SubRivers):
+    def __init__(self, page):
+        super(SubRiversPage, self).__init__(page)
+
+    def prev_page(self, page):
+        if page == 2: return "/reddits/"
+        return "reddits/page/" + str(page - 1)
 
 class StoryStats(object):
     def __init__(self, time_offset, subreddit=config.default_subreddit, count=10):

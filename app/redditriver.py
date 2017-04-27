@@ -22,6 +22,7 @@ urls = (
     '/r/([a-zA-Z0-9_.-]+)/?',            'SubRedditRiver',
     '/r/([a-zA-Z0-9_.-]+)/page/(\d+)/?', 'SubRedditRiverPage',
     '/reddits/?',                        'SubReddits',
+    '/reddits/page/(\d+)/?',             'SubRedditsPage',
     '/stats/?',                          'Stats',
     '/stats/([a-zA-Z0-9_.-]+)/?',        'SubStats',
     '/about/?',                          'AboutRiver'
@@ -65,9 +66,15 @@ class SubRedditRiverPage(object):
 class SubReddits(object):
     def GET(self):
         st = stories.SubRivers()
-        subreddits = st.get()
-        return render.subreddits_tpl(subreddits=subreddits)
+        subreddit_page = st.get()
+        return render.subreddits_tpl(**subreddit_page)
 
+class SubRedditsPage(object):
+    def GET(self, page):
+        st = stories.SubRiversPage(page)
+        subreddit_page = st.get()
+        return render.subreddits_tpl(**subreddit_page)
+        
 class AboutRiver(object):
     def GET(self):
         return render.about_tpl()

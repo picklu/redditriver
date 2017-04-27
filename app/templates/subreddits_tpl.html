@@ -2,6 +2,21 @@
  <p class="subreddits">
   most popular subreddits:
  </p>
+ 
+ #if $next_page or $prev_page
+  <p class="more">view more: 
+   #if $prev_page
+    <a href="$prev_page_link">&lt;-- prev page</a>
+   #end if
+   #if $next_page and $prev_page
+    |
+   #end if
+   #if $next_page
+    <a href="$next_page_link">next page --&gt;</a>
+   #end if
+  </p>
+ #end if
+
  #for subreddit in $subreddits
   <p class="subreddit">
     <a href="/r/$subreddit.reddit_name/">$subreddit.name</a>
@@ -10,4 +25,19 @@
     <span class="desc">#if len($subreddit.description) then ' -- ' + $subreddit.description else '' #</span>
   </p>
  #end for
+ 
+ #if $next_page or $prev_page
+  <p class="more">view more: 
+   #if $prev_page
+    <a href="$prev_page_link">&lt;-- prev page</a>
+   #end if
+   #if $next_page and $prev_page
+    |
+   #end if
+   #if $next_page
+    <a href="$next_page_link">next page --&gt;</a>
+   #end if
+  </p>
+ #end if
+
 #include "templates/common_footer_tpl.html"
