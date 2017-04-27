@@ -29,7 +29,6 @@ CREATE TABLE stories (
   url_mobile    TEXT,
   reddit_id     TEXT       NOT NULL,
   subreddit_id  INTEGER    NOT NULL,
-  score         INTEGER    NOT NULL,
   comments      INTEGER    NOT NULL,
   user          TEXT       NOT NULL,
   position      INTEGER    NOT NULL,
