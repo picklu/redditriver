@@ -85,6 +85,7 @@ def main():
                     cur.execute(pos_query, (existing_sr['position'], exchange_sr['id']))
 
     conn.commit()
+    print "subreddtits updated"
 
 if __name__ == "__main__":
 
