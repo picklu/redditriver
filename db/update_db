@@ -1,21 +1,28 @@
 #!/bin/bash
 
+sql=/usr/bin/sqlite3
 db=/home/ubuntu/personal/redditriver/db
-subreddits_dump=$db/log/subreddits.log
-stories_dump=$db/log/stories.log
+query_stories=$db/stories_stat.sql
+query_reddits=$db/subreddits_stat.sql
+dump=$db/log/reddits.log
 updater=/home/ubuntu/personal/redditriver/bin
+updater_stories=$updater/update_stories.py
+updater_reddits=$updater/update_subreddits.py
+
 
 # update subreddits
-$updater/update_subreddits.py >> $subreddits_dump
-/usr/bin/sqlite3 $db/redditriver.db < $db/subreddits_stat.sql >> $subreddits_dump 2>&1
-echo "===============================" >> $subreddits_dump
-echo "" >> $subreddits_dump
+$sql $db/redditriver.db < $query_reddits > $dump 2>&1
+echo "" >> $dump
+$updater_reddits >> $dump
+$sql $db/redditriver.db < $query_reddits >> $dump 2>&1
+echo "===============================" >> $dump
+echo "" >> $dump
 
 # update stories
-/usr/bin/sqlite3 $db/redditriver.db < $db/stories_stat.sql > $stories_dump 2>&1
-ls -sh $db/redditriver.db >> $stories_dump
-echo "" >> $stories_dump
-$updater/update_stories.py >> $stories_dump 2>&1
-echo "" >> $stories_dump
-/usr/bin/sqlite3 $db/redditriver.db < $db/stories_stat.sql >> $stories_dump 2>&1
-ls -sh $db/redditriver.db >> $stories_dump
+$sql $db/redditriver.db < $query_stories >> $dump 2>&1
+ls -sh $db/redditriver.db >> $dump
+echo "" >> $dump
+$updater_stories >> $dump 2>&1
+echo "" >> $dump
+$sql $db/redditriver.db < $query_stories >> $dump 2>&1
+ls -sh $db/redditriver.db >> $dump
