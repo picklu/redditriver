@@ -2,6 +2,8 @@
 
 sql=/usr/bin/sqlite3
 db=/home/ubuntu/personal/redditriver/db
+db_file=$db/redditriver.db
+db_schema=$db/db.schema.txt
 query_stories=$db/stories_stat.sql
 query_reddits=$db/subreddits_stat.sql
 dump=$db/log/reddits.log
@@ -9,6 +11,9 @@ updater=/home/ubuntu/personal/redditriver/bin
 updater_stories=$updater/update_stories.py
 updater_reddits=$updater/update_subreddits.py
 
+# reset database
+rm -f $db_file
+$sql $db_file < $db_schema
 
 # update subreddits
 $sql $db/redditriver.db < $query_reddits > $dump 2>&1
