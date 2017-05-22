@@ -39,8 +39,8 @@ default_subreddit = 'front_page'   # front_page is the 'reddit.com' front page
 
 # stories per page to display on redditriver.com
 #
-stories_per_page = 15
+stories_per_page = 20
 
 # stories per page to display on redditriver.com
 #
-subreddits_per_page = 15
+subreddits_per_page = 20
