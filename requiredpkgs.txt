@@ -3,4 +3,4 @@ python-pip
 libsqlite3-dev 
 sqlite3
 apache2
-libapache2-mod-wsgi
+apache2-dev
