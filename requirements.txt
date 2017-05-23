@@ -6,4 +6,5 @@ pysqlite==2.8.3
 python-dateutil==2.6.0
 simplejson==3.10.0
 web.py==0.38
-mod-wsgi
+mod_wsgi-httpd
+mod_wsgi
