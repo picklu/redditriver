@@ -6,5 +6,4 @@ backup=$db/backup/redditriver.db
 dump=$db/log/reddits.log
 
 # reset database
-rm -f $db_file
-cp $backup $db_file > $dump 2>&1
+cp -f $backup $db_file > $dump 2>&1
