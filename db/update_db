@@ -6,29 +6,24 @@ db_file=$db/redditriver.db
 db_schema=$db/db.schema.txt
 query_stories=$db/stories_stat.sql
 query_reddits=$db/subreddits_stat.sql
-backup=$db/backup/redditriver.db
 dump=$db/log/reddits.log
 updater=/home/ubuntu/personal/redditriver/bin
 updater_stories=$updater/update_stories.py
 updater_reddits=$updater/update_subreddits.py
 
-# reset database
-rm -f $db_file
-cp $backup $db_file > $dump 2>&1
-
 # update subreddits
-$sql $db/redditriver.db < $query_reddits >> $dump 2>&1
+$sql $db_file < $query_reddits >> $dump 2>&1
 echo "" >> $dump
-$updater_reddits >> $dump
-$sql $db/redditriver.db < $query_reddits >> $dump 2>&1
+$updater_reddits >> $dump 2>&1
+$sql $db_file < $query_reddits >> $dump 2>&1
 echo "===============================" >> $dump
 echo "" >> $dump
 
 # update stories
-$sql $db/redditriver.db < $query_stories >> $dump 2>&1
-ls -sh $db/redditriver.db >> $dump
+$sql $db_file < $query_stories >> $dump 2>&1
+ls -sh $db_file >> $dump
 echo "" >> $dump
 $updater_stories >> $dump 2>&1
 echo "" >> $dump
-$sql $db/redditriver.db < $query_stories >> $dump 2>&1
-ls -sh $db/redditriver.db >> $dump
+$sql $db_file < $query_stories >> $dump 2>&1
+ls -sh $db_file >> $dump
