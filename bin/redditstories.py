@@ -73,7 +73,7 @@ def _extract_stories(content):
     soup = BeautifulSoup(content)
     entries = soup.findAll('div', {'class': re.compile('entry *')})
     for entry in entries:
-        p_title = entry.find('p', {'class': re.compile('title *')});
+        p_title = entry.find('p', {'class': re.compile('title *')})
         if not p_title:
             raise RedesignError("title <p> tag was not found")
 
@@ -96,7 +96,7 @@ def _extract_stories(content):
         
         id = m.group(1)
         
-        p_tagline = entry.find('p', {'class': 'tagline'});
+        p_tagline = entry.find('p', {'class': re.compile('tagline')})
         if not p_tagline:
             raise RedesignError("tagline <p> tag was not found")
 
@@ -106,7 +106,7 @@ def _extract_stories(content):
         
         user = a_author.text
         
-        time_posted = p_tagline.find('time', {'class': 'live-timestamp'})
+        time_posted = p_tagline.find('time', {'class': re.compile('live-timestamp')})
         if not time_posted:
             raise RedesignError("posted ago <time> tag was not found")
 
