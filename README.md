@@ -7,7 +7,7 @@ The initial commit contains the full source code of http://redditriver.com websi
 is available at http://catonmat.net/blog/designing-redditriver-dot-com-website
 
 **The app in its current form is running at
-      - http://ec2-52-24-238-207.us-west-2.compute.amazonaws.com
+      - http://jvanalysis.com:8081/
 
 This directory contains:
 ------------------------
