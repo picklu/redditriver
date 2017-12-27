@@ -5,3 +5,4 @@ sqlite3
 apache2
 libapache2-mod-wsgi
 libsqlite3-dev
+cron
