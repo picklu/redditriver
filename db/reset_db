@@ -1,6 +1,6 @@
 #!/bin/bash
 
-db=/home/ubuntu/personal/redditriver/db
+db=/home/ubuntu/redditriver/db
 db_file=$db/redditriver.db
 backup=$db/backup/redditriver.db
 dump=$db/log/reddits.log

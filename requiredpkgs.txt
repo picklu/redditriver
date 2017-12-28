@@ -4,3 +4,5 @@ libsqlite3-dev
 sqlite3
 apache2
 apache2-dev
+libsqlite3-dev
+cron
