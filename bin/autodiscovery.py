@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3.6
 #
 # Peteris Krumins (peter@catonmat.net)
 # http://www.catonmat.net  --  good coders code, great reuse
@@ -23,20 +23,21 @@ sys.path.append(path.dirname(cwd))
 import re
 import time
 import socket
-import urllib2
-import urlparse
-from BeautifulSoup import BeautifulSoup, NavigableString
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+from urllib.parse import urlparse
+from bs4 import BeautifulSoup, NavigableString
 from config import riverconfig as config
 
 socket.setdefaulttimeout(15)
 
-version = "2.0"
+version = "3.0"
 
 class AutoDiscoveryError(Exception):
     """ Exception which this module might throw. """
     pass
 
-class AutoDiscovery(object):
+class AutoDiscovery:
     """ Autodiscovers URL of a mobile version of a webpage. """
 
     dispatchers = None
@@ -75,15 +76,15 @@ class AutoDiscovery(object):
                 try:
                     command, data = re.split(r'\s+|\t+', line, 1)
                 except ValueError:
-                    raise AutoDiscoveryError, ("Unknown line: '%s' while parsing '%s'" % (line, config_file))
+                    raise AutoDiscoveryError(f"Unknown line: {line} while parsing {config_file}")
 
                 if command not in AutoDiscovery.dispatchers:
-                    raise AutoDiscoveryError, "Config command '%s' not found" % command
+                    raise AutoDiscoveryError(f"Config command {command} not found")
 
                 AutoDiscovery.dispatchers[command](self, data)
             file.close()
-        except IOError, e:
-            raise AutoDiscoveryError, e
+        except IOError as e:
+            raise AutoDiscoveryError(e)
 
     def _print_link(self, data):
         """
@@ -94,7 +95,7 @@ class AutoDiscovery(object):
 
         m = re.search(r'''^["'](.+)['"]$''', data)
         if not m:
-            raise AutoDiscoveryError, "Invalid data passed to 'PRINT_LINK' config command"
+            raise AutoDiscoveryError("Invalid data passed to 'PRINT_LINK' config command")
 
         link_text = m.group(1).lower()
 
@@ -170,11 +171,11 @@ class AutoDiscovery(object):
         try:
             host_re, from_re, to_re = re.split(r'\s+|\t+', data)
         except ValueError:
-            raise AutoDiscoveryError, "Invalid data passed to REWRITE_URL config command"
+            raise AutoDiscoveryError("Invalid data passed to REWRITE_URL config command")
 
         def mk_rewriter():
             def should_rewrite(url):
-                parsed = urlparse.urlparse(url)
+                parsed = urlparse(url)
                 if re.search(host_re, parsed[1]): # 1 is host
                     return True
                 return False
@@ -219,18 +220,18 @@ class AutoDiscovery(object):
                 return url
 
         content = self._get_page(url)
-        soup = BeautifulSoup(content)
+        soup = BeautifulSoup(content, features="html.parser")
 
         # Lets see if the page has a
         # <link rel="alternate" media="handheld" href="..."> tag
         #
         def link_finder(tag):
-            if tag.name == 'link' and tag.has_key('media') and 'handheld' in tag['media']:
+            if tag.name == 'link' and tag.has_attr('media') and 'handheld' in tag['media']:
                 return True
             return False
 
         link = soup.find(link_finder)
-        if link and link.has_key('href'):
+        if link and link.has_attr('href'):
             return link['href']
 
         for lookup in self.lookups: # lookup is a function
@@ -254,30 +255,30 @@ class AutoDiscovery(object):
     def _get_page(self, url):
         """ Gets and returns a web page at url """
         timestr = time.strftime("%Y%m%d-%H%M%S")
-        uagent = 'picklus redditriver: 0.1({})'.format(timestr)
-        request = urllib2.Request(url)
+        uagent = f"picklus redditriver: 0.1-{timestr}"
+        request = Request(url)
         request.add_header('User-Agent', uagent)
 
         try:
-            content = urllib2.urlopen(request)
+            content = urlopen(request)
             return content.read()
-        except (urllib2.HTTPError, urllib2.URLError, socket.error, socket.sslerror), e:
+        except (HTTPError, URLError, socket.error, socket.sslerror) as e:
             raise AutoDiscoveryError(e)
 
 
 if __name__ == "__main__":
     try:
-        prog, url = sys.argv
+        _, url = sys.argv
     except ValueError:
-        print "Usage: " + sys.argv[0] + ' <URL>'
+        print(f"Usage: {sys.argv[0] } <URL>")
         sys.exit(1)
 
     ad = AutoDiscovery();
     mobile_url = ad.autodiscover(url)
 
     if not mobile_url:
-        print "No mobile url was found for '%s'!" % url
+        print(f"No mobile url was found for {url}!")
         sys.exit(1)
 
-    print mobile_url
+    print(mobile_url)
 

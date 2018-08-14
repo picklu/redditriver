@@ -1,10 +1,10 @@
-BeautifulSoup==3.2.1
+beautifulsoup4==4.6.3
 Cheetah==2.4.4
 Markdown==2.6.2
 pyparsing==2.2.0
 pysqlite==2.8.3
 python-dateutil==2.6.0
 simplejson==3.10.0
-web.py==0.38
 mod_wsgi-httpd
 mod_wsgi
+web.py==0.40.dev1
