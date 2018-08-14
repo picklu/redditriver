@@ -18,16 +18,16 @@ import time
 import fcntl
 import redditstories
 import autodiscovery
-from itertools import izip, count
-from pysqlite2 import dbapi2 as sqlite
+from itertools import count
+from sqlite3 import dbapi2 as sqlite
 
 sys.path.append(sys.path[0] + '/../config')
 
 import riverconfig as config
 
-version = "1.0"
+version = "3.0"
 
-class Lock(object):
+class Lock:
     """ File locking class """
     def __init__(self, file):
         self.file = file
@@ -37,7 +37,7 @@ class Lock(object):
         try:
             fcntl.lockf(self.f.fileno(), fcntl.LOCK_EX|fcntl.LOCK_NB)
             return True
-        except IOError, e:
+        except IOError as e:
             return False
 
 # Whether to do autodiscovery (when testing sometimes it's not needed)
@@ -72,17 +72,17 @@ def main():
     for subreddit in subreddits:
         new_stories = 0
         updated_stories = 0
-        print "Going after %s's subreddit stories! " % subreddit['reddit_name']
+        print(f"Going after {subreddit['reddit_name']}'s subreddit stories! ")
         try:
             stories = redditstories.get_stories(subreddit=subreddit['reddit_name'], pages=config.story_pages)
-        except redditstories.RedesignError, e:
-            print "Could not get stories for %s (reddit might have redesigned: %s)!" % (subreddit['reddit_name'], e)
+        except redditstories.RedesignError as e:
+            print(f"Could not get stories for {subreddit['reddit_name']} (reddit might have redesigned: {e})!")
             continue
-        except redditstories.StoryError, e:
-            print "Serious error while getting %s: %s!" % (subreddit['reddit_name'], e)
+        except redditstories.StoryError as e:
+            print(f"Serious error while getting {subreddit['reddit_name']}: {e}!")
             continue
 
-        for position, story in izip(count(1), stories):
+        for position, story in zip(count(1), stories):
             story['position'] = position
             story['subreddit_id'] = subreddit['id']
             cur.execute("SELECT id, position FROM stories WHERE subreddit_id = ? AND title = ? AND url = ?",
@@ -107,17 +107,17 @@ def main():
             if do_autodiscovery:
                 try:
                     if autodiscdebug:
-                        print "Autodiscovering '" + story['url'] + "'"
+                        print(f"Autodiscovering '{story['url']}'")
                     autodisc = autodiscovery.AutoDiscovery()
                     story['url_mobile'] = autodisc.autodiscover(story['url'])
                     if autodiscdebug:
                         if story['url_mobile']:
-                            print "Autodiscovered '" + story['url_mobile'] + "'"
+                            print(f"Autodiscovered '{story['url_mobile']}'")
                         else:
-                            print "Did not autodiscover anything!"
-                except (autodiscovery.AutoDiscoveryError, UnicodeEncodeError), e:
+                            print("Did not autodiscover anything!")
+                except (autodiscovery.AutoDiscoveryError, UnicodeEncodeError) as e:
                     if autodiscdebug:
-                        print "Failed autodiscovering: %s" % e
+                        print(f"Failed autodiscovering: {e}")
                     pass
 
             story['date_added'] = int(time.time())
@@ -138,22 +138,22 @@ def main():
 
         total_new += new_stories
         total_updated += updated_stories
-        print "%d new and %d updated (%d total)" % (new_stories, updated_stories, new_stories + updated_stories)
+        print(f"{new_stories} new and {updated_stories} updated ({new_stories+updated_stories} total)")
 
-    print "Total: %d new and %d updated (%d total)" % (total_new, total_updated, total_new + total_updated)
+    print(f"Total: {total_new} new and {total_updated} updated ({total_new+total_updated} total)")
 
 if __name__ == "__main__":
     lock = Lock(config.lock_dir + '/update_stories.lock')
     if not lock.lock():
-        print "I might be already running!"
+        print("I might be already running!")
         sys.exit(1)
 
     argv = sys.argv[1:]
     if "--noautodisc" in argv:
-        print "Setting autodiscovery to False"
+        print("Setting autodiscovery to False")
         do_autodiscovery = False
     if "--autodiscdebug" in argv:
-        print "Setting autodiscovery debug to True"
+        print("Setting autodiscovery debug to True")
         autodiscdebug = True
 
     main()

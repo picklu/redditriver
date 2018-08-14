@@ -14,10 +14,12 @@ import re
 import sys
 import time
 import socket
-import urllib2
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
-version = "2.0"
+
+version = "3.0"
 
 reddit_url = 'https://www.reddit.com'
 subreddits_url = 'https://www.reddit.com/reddits'
@@ -75,7 +77,7 @@ def _extract_subreddits(content):
 
     subreddits = []
     name = reddit_name = description = subscribers = ""
-    soup = BeautifulSoup(content)
+    soup = BeautifulSoup(content, features="html.parser")
     entries = soup.findAll('div', {'class': re.compile('entry *')})
     if not entries:
         raise RedesignError("<div> tag with a class 'entry' not found!")
@@ -125,13 +127,13 @@ def _get_page(url):
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
     uagent = 'picklus redditriver: 0.1({})'.format(timestr)
-    request = urllib2.Request(url)
+    request = Request(url)
     request.add_header('User-Agent', uagent)
 
     try:
-        response = urllib2.urlopen(request)
+        response = urlopen(request)
         content = response.read()
-    except (urllib2.HTTPError, urllib2.URLError, socket.error,
+    except (HTTPError, URLError, socket.error,
             socket.sslerror) as e:
         raise SubRedditError(e)
 
@@ -139,7 +141,7 @@ def _get_page(url):
 
 
 def _get_next_page(content):
-    soup = BeautifulSoup(content)
+    soup = BeautifulSoup(content, features="html.parser")
     a = soup.find('a', {'rel': 'nofollow next'})
     if a:
         return str(a['href'])
@@ -159,20 +161,19 @@ def print_subreddits_paragraph(srs):
     """
 
     for item in srs:
-        print 'position     :       ', item['position']
-        print 'name         :       ', item['name']
-        print 'reddit_name  :       ', item['reddit_name']
-        print 'description  :       ', item['description']
-        print 'subscribers  :       ', item['subscribers']
-        print
-
+        print('position     :       ', item['position'])
+        print('name         :       ', item['name'])
+        print('reddit_name  :       ', item['reddit_name'])
+        print('description  :       ', item['description'])
+        print('subscribers  :       ', item['subscribers'])
+        print()
 
 def print_subreddits_json(srs):
     """ Given a list of dictionaries of subreddits (srs), prints them out in
     json format."""
 
     import simplejson
-    print simplejson.dumps(srs, indent=4)
+    print(simplejson.dumps(srs, indent=4))
 
 
 if __name__ == '__main__':
@@ -209,17 +210,17 @@ if __name__ == '__main__':
     }
 
     if options.output not in output_printers:
-        print >> sys.stderr, "Valid -o parameter values are: paragraph or json!"
+        print("Valid -o parameter values are: paragraph or json!", file=sys.stderr)
         sys.exit(1)
 
     try:
         srs = get_subreddits(options.pages, options.new)
     except RedesignError as e:
-        print >> sys.stderr, "Reddit has redesigned! %s!" % e
+        print(f"Reddit has redesigned! {e}!")
         sys.exit(1)
     except SubRedditError as e:
-        print >> sys.stderr, "Serious error: %s!" % e
+        print(f"Serious error: {e}!", file=sys.stderr)
         sys.exit(1)
 
     output_printers[options.output](srs)
-    print "Success!!!"
+    print("Success!!!")

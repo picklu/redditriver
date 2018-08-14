@@ -12,19 +12,21 @@
 
 import re
 import sys
-import time
-import socket
-import urllib2
 import datetime
-import dateutil.parser as dtp
-from BeautifulSoup import BeautifulSoup
+import socket
+import time
+from bs4 import BeautifulSoup
+from dateutil import parser as dtp
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
-version = "2.0"
+
+version = "3.0"
 
 reddit_url = 'https://www.reddit.com'
 subreddit_url = 'https://www.reddit.com/r'
 
-socket.setdefaulttimeout(30)
+socket.setdefaulttimeout(60)
 
 class RedesignError(Exception):
     """ An exception class thrown when it seems that Reddit has redesigned """
@@ -41,7 +43,6 @@ def get_stories(subreddit="front_page", pages=1, new=False):
 
     If new is True, gets new stories at https:www.//reddit.com/new or
     https://www.reddit.com/r/subreddit/new"""
-
     stories = []
     if subreddit == "front_page":
         url = reddit_url
@@ -53,16 +54,16 @@ def get_stories(subreddit="front_page", pages=1, new=False):
         content = _get_page(url)
         new_stories = _extract_stories(content)
         for story in new_stories:
-            story['url'] = story['url'].replace('&amp;', '&')
+            story['url'] = story['url'].replace(b'&amp;', b'&')
             story['position'] = position
-            story['subreddit'] = subreddit
+            story['subreddit'] = subreddit.encode('utf-8')
             position += 1
         stories.extend(new_stories)
         url = _get_next_page(content)
         if not url:
             break
 
-    return stories;
+    return stories
 
 def _extract_stories(content):
     """Given an HTML page, extracts all the stories and returns a list of dicts of them.
@@ -70,7 +71,7 @@ def _extract_stories(content):
     See the 'html.examples/story.entry.html' for an example how HTML of an entry looks like"""
 
     stories = []
-    soup = BeautifulSoup(content)
+    soup = BeautifulSoup(content, features="html.parser")
     entries = soup.findAll('div', {'class': re.compile('entry *')})
     for entry in entries:
         p_title = entry.find('p', {'class': re.compile('title *')})
@@ -89,8 +90,8 @@ def _extract_stories(content):
         div_reportform = entry.find('div', {'class': re.compile('reportform report-t3_*')})
         if not div_reportform:
             raise RedesignError("reportform <div> tag was not found")
-        
-        m = re.search(r'reportform report-t3_(.+)', div_reportform['class'])
+        report_form_content = " ".join(div_reportform['class'])
+        m = re.search(r'reportform report-t3_(.+)', report_form_content)
         if not m:
             raise RedesignError("a reddit id was not found")
         
@@ -152,21 +153,21 @@ def _get_page(url):
     """ Gets and returns a web page at url """
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    uagent = 'picklus redditriver: 0.1({})'.format(timestr)
-    request = urllib2.Request(url)
+    uagent = f"picklus redditriver: 0-3-{timestr}"
+    request = Request(url)
     request.add_header('User-Agent', uagent)
 
     try:
-        response = urllib2.urlopen(request)
-        content = response.read()
-    except (urllib2.HTTPError, urllib2.URLError, socket.error,
+        response = urlopen(request).read()
+        content = response.decode("utf-8")
+    except (HTTPError, URLError, socket.error,
             socket.sslerror) as e:
         raise StoryError(e)
 
     return content
 
 def _get_next_page(content):
-    soup = BeautifulSoup(content)
+    soup = BeautifulSoup(content, features="html.parser")
     a = soup.find('a', {'rel': 'nofollow next'})
     if a:
         return str(a['href'])
@@ -175,22 +176,22 @@ def print_stories_paragraph(stories):
     """ Given a list of dictionaries of stories, prints them out paragraph at a time. """
 
     for story in stories:
-        print 'position:', story['position']
-        print 'subreddit:', story['subreddit']
-        print 'id:', story['id']
-        print 'title:', story['title']
-        print 'url:', story['url']
-        print 'comments:', story['comments']
-        print 'user:', story['user']
-        print 'unix_time:', story['unix_time']
-        print 'human_time:', story['human_time']
-        print
+        print('position:', story['position'])
+        print('subreddit:', story['subreddit'])
+        print('id:', story['id'])
+        print('title:', story['title'])
+        print('url:', story['url'])
+        print('comments:', story['comments'])
+        print('user:', story['user'])
+        print('unix_time:', story['unix_time'])
+        print('human_time:', story['human_time'])
+        print()
 
 def print_stories_json(stories):
     """ Given a list of dictionaries of stories, prints them out in json format."""
 
-    import simplejson
-    print simplejson.dumps(stories, indent=4)
+    import json
+    print(json.dumps(stories, indent=4))
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -202,41 +203,48 @@ if __name__ == '__main__':
     parser = OptionParser(description=description, usage=usage)
     parser.add_option(
         "-o", 
+        "--output",
         action="store", 
         dest="output", 
         default="paragraph",
         help="Output format: paragraph or json. Default: paragraph.")
-    parser.add_option("-p", 
+    parser.add_option(
+        "-p",
+        "--pages",
         action="store", 
         type="int", 
         dest="pages",
         default=1, 
         help="How many pages of stories to output. Default: 1.")
-    parser.add_option("-s", 
+    parser.add_option(
+        "-s",
+        "--subreddit",
         action="store", 
         dest="subreddit", 
         default="front_page",
         help="Subreddit to retrieve stories from. Default: front_page.")
     parser.add_option("-n", 
-        action="store_true", 
+        action="store_true",
         dest="new",
+        default=False,
         help="Retrieve new stories. Default: nope.")
     options, args = parser.parse_args()
 
     output_printers = { 'paragraph': print_stories_paragraph,
                         'json': print_stories_json }
-
+    
+    
     if options.output not in output_printers:
-        print >>sys.stderr, "Valid -o parameter values are: paragraph or json!"
+        print("Valid -o parameter values are: paragraph or json!")
         sys.exit(1)
 
     try:
         stories = get_stories(options.subreddit, options.pages, options.new)
-    except RedesignError, e:
-        print >>sys.stderr, "Reddit has redesigned! %s!" % e
+    except RedesignError as e:
+        print(f"Reddit has redesigned! {e}!", file=sys.stderr)
         sys.exit(1)
-    except StoryError, e:
-        print >>sys.stderr, "Serious error: %s!" % e
+    except StoryError as e:
+        print(f"Serious error: {e}!", file=sys.stderr)
         sys.exit(1)
 
     output_printers[options.output](stories)

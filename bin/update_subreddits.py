@@ -16,12 +16,12 @@ import os
 import sys
 import fcntl
 import subreddits
-from pysqlite2 import dbapi2 as sqlite
+from sqlite3 import dbapi2 as sqlite
 
 sys.path.append(sys.path[0] + '/../config')
 import riverconfig as config
 
-version = "1.0"
+version = "3.0"
 
 class Lock(object):
     """ File locking class """
@@ -33,17 +33,17 @@ class Lock(object):
         try:
             fcntl.lockf(self.f.fileno(), fcntl.LOCK_EX|fcntl.LOCK_NB)
             return True
-        except IOError, e:
+        except IOError as e:
             return False
 
 def main():
     try:
         srs = subreddits.get_subreddits(pages=config.subreddit_pages)
-    except subreddits.RedesignError, e:
-        print >>sys.stderr, "Reddit has redesigned: %s", (e,)
+    except subreddits.RedesignError as e:
+        print(f"Reddit has redesigned: {e}!", file=sys.stderr)
         sys.exit(1)
-    except subreddits.SubRedditError, e:
-        print >>sys.stderr, "Serious error: %s!" % e
+    except subreddits.SubRedditError as e:
+        print(f"Serious error: {e}!", file=sys.stderr)
         sys.exit(1)
 
     conn = sqlite.connect(database=config.database, timeout=10)
@@ -85,13 +85,13 @@ def main():
                     cur.execute(pos_query, (existing_sr['position'], exchange_sr['id']))
 
     conn.commit()
-    print "subreddtits updated"
+    print("subreddtits updated")
 
 if __name__ == "__main__":
 
     lock = Lock(config.lock_dir + '/update_subreddits.lock')
     if not lock.lock():
-        print "I might be already running!"
+        print("I might be already running!")
         sys.exit(1)
 
     main()
