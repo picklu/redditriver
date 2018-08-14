@@ -260,8 +260,8 @@ class AutoDiscovery:
         request.add_header('User-Agent', uagent)
 
         try:
-            content = urlopen(request)
-            return content.read()
+            content = urlopen(request).read()
+            return content.decode("utf-8")
         except (HTTPError, URLError, socket.error, socket.sslerror) as e:
             raise AutoDiscoveryError(e)
 
