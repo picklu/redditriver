@@ -23,7 +23,7 @@ import riverconfig as config
 
 version = "3.0"
 
-class Lock(object):
+class Lock:
     """ File locking class """
     def __init__(self, file):
         self.file = file
