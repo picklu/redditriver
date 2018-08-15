@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3.6
 #
 # Refactoring Peteris Krumin's redditriver
 # to make that working with current version of python (2.7.11),
@@ -11,9 +11,9 @@ from os import sys, path, chdir
 cwd = path.dirname(path.abspath(__file__))
 chdir(cwd) # change the path to the directory of this file
 sys.path.append(path.dirname(cwd))
+from app import stories
 from web.contrib.template import render_cheetah
 from web import application, webapi, debugerror, net, httpserver
-import stories
 
 
 urls = (
@@ -37,54 +37,54 @@ render = render_cheetah(path.join(cwd, 'templates'))
 ################
 # page handlers
 ################
-class RedditRiver(object):
+class RedditRiver:
     def GET(self):
         st = stories.RiverStories()
         story_page = st.get()
         return render.stories_tpl(**story_page)
 
-class RedditRiverPage(object):
+class RedditRiverPage:
     def GET(self, page):
         st = stories.RiverStoriesPage(page)
         story_page = st.get()
         return render.stories_tpl(**story_page)
 
-class SubRedditRiver(object):
+class SubRedditRiver:
     def GET(self, subreddit):
         st = stories.SubRiverStories(subreddit)
         story_page = st.get()
         story_page['subreddit'] = subreddit
         return render.stories_tpl(**story_page)
 
-class SubRedditRiverPage(object):
+class SubRedditRiverPage:
     def GET(self, subreddit, page):
         st = stories.SubRiverStoriesPage(subreddit, page)
         story_page = st.get()
         story_page['subreddit'] = subreddit
         return render.stories_tpl(**story_page)
 
-class SubReddits(object):
+class SubReddits:
     def GET(self):
         st = stories.SubRivers()
         subreddit_page = st.get()
         return render.subreddits_tpl(**subreddit_page)
 
-class SubRedditsPage(object):
+class SubRedditsPage:
     def GET(self, page):
         st = stories.SubRiversPage(page)
         subreddit_page = st.get()
         return render.subreddits_tpl(**subreddit_page)
 
-class AboutRiver(object):
+class AboutRiver:
     def GET(self):
         return render.about_tpl()
 
-class Stats(object):
+class Stats:
     def GET(self):
         user_stats, story_stats = stories.UserStats(count=10).get()
         return render.stats_tpl(user_stats=user_stats, story_stats=story_stats)
 
-class SubStats(object):
+class SubStats:
     def GET(self, subreddit):
         user_stats, story_stats = stories.UserStats(subreddit, count=10).get()
         return render.stats_tpl(user_stats=user_stats, story_stats=story_stats,

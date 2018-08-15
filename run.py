@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.6
 
 import sys
-from app import *
+from app.redditriver import *
 
 if __name__ == "__main__":
     if len(sys.argv) > 2:

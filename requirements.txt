@@ -1,9 +1,10 @@
 beautifulsoup4==4.6.3
-Cheetah==2.4.4
-Markdown==2.6.2
-mod_wsgi-httpd
-mod_wsgi
-pyparsing==2.2.0
-pysqlite==2.8.3
+certifi==2018.8.13
+chardet==3.0.4
+Cheetah3==3.1.0
+idna==2.7
 python-dateutil==2.7.3
+requests==2.19.1
+six==1.11.0
+urllib3==1.23
 web.py==0.40.dev1

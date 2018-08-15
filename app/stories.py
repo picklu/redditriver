@@ -1,8 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3.6
 import sys
 import re
 import web
-from urlparse import urlparse
+from urllib.parse import urlparse
 from config import riverconfig as config
 from datetime import datetime, timedelta
 from time import mktime
@@ -19,16 +19,17 @@ def get_nice_host(url):
         'foo.bar.baz' """
 
     parsed_url = urlparse(url)
-    host = parsed_url[1] # 1 is 'host'
+    host = parsed_url[1]    # 1 is 'host'
+    host = host.decode('utf-8') if type(host) == bytes else host
     host = re.sub(r'www?\d*\.', '', host)
     return host
 
-class Stories(object):
+class Stories:
     def __init__(self, subreddit, page):
         self.subreddit = subreddit
         self.page = int(page)
         if self.page == 0: self.page = 1
-        if self.page > sys.maxint: self.page = 1
+        if self.page > sys.maxsize: self.page = 1
 
     def _story_query(self):
         story_query = ("SELECT st.title title, st.url url, st.url_mobile url_mobile, "
@@ -83,14 +84,14 @@ class Stories(object):
 
 class RiverStories(Stories):
     def __init__(self, page=1):
-        super(RiverStories, self).__init__(config.default_subreddit, page)
+        super().__init__(config.default_subreddit, page)
 
     def next_page(self, subreddit, page):
         return "/page/" + str(page + 1)
 
 class RiverStoriesPage(RiverStories):
     def __init__(self, page):
-        super(RiverStoriesPage, self).__init__(page)
+        super().__init__(page)
 
     def prev_page(self, subreddit, page):
         if page == 2: return "/"
@@ -98,25 +99,25 @@ class RiverStoriesPage(RiverStories):
 
 class SubRiverStories(Stories):
     def __init__(self, subreddit, page=1):
-        super(SubRiverStories, self).__init__(subreddit, page)
+        super().__init__(subreddit, page)
 
     def next_page(self, subreddit, page):
         return "/r/" + subreddit + "/page/" + str(page + 1)
 
 class SubRiverStoriesPage(SubRiverStories):
     def __init__(self, subreddit, page):
-        super(SubRiverStoriesPage, self).__init__(subreddit, page)
+        super().__init__(subreddit, page)
 
     def prev_page(self, subreddit, page):
         if page == 2:
             return "/r/" + subreddit
         return "/r/" + subreddit + "/page/" + str(page - 1)
 
-class Rivers(object):
+class Rivers:
     def __init__(self, page):
         self.page = int(page)
         if self.page == 0: self.page = 1
-        if self.page > sys.maxint: self.page = 1
+        if self.page > sys.maxsize: self.page = 1
     
     def _river_query(self):
         river_query = ("SELECT * FROM subreddits WHERE id > 0 and active = 1 "
@@ -162,20 +163,20 @@ class Rivers(object):
 
 class SubRivers(Rivers):
     def __init__(self, page=1):
-        super(SubRivers, self).__init__(page)
+        super().__init__(page)
 
     def next_page(self, page):
         return "/reddits/page/" + str(page + 1)
 
 class SubRiversPage(SubRivers):
     def __init__(self, page):
-        super(SubRiversPage, self).__init__(page)
+        super().__init__(page)
 
     def prev_page(self, page):
         if page == 2: return "/reddits/"
         return "reddits/page/" + str(page - 1)
 
-class StoryStats(object):
+class StoryStats:
     def __init__(self, time_offset, subreddit=config.default_subreddit, count=10):
         self.subreddit = subreddit
         self.count = count
@@ -205,7 +206,7 @@ class StoryStats(object):
             stories.append(s)
         return stories
 
-class UserStats(object):
+class UserStats:
     def __init__(self, subreddit=config.default_subreddit, count=10):
         self.subreddit = subreddit
         self.count = count
