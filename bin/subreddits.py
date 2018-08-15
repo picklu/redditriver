@@ -13,8 +13,10 @@
 import re
 import sys
 import time
-import socket
 from bs4 import BeautifulSoup
+from socket import error as SocketError
+from socket import setdefaulttimeout
+from ssl import SSLError
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -24,7 +26,7 @@ version = "3.0"
 reddit_url = 'https://www.reddit.com'
 subreddits_url = 'https://www.reddit.com/reddits'
 
-socket.setdefaulttimeout(30)
+setdefaulttimeout(30)
 
 
 class RedesignError(Exception):
@@ -126,15 +128,15 @@ def _get_page(url):
     """ Gets and returns a web page at url """
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    uagent = 'picklus redditriver: 0.1({})'.format(timestr)
+    uagent = f"picklus redditriver: 0.3-{timestr}"
     request = Request(url)
     request.add_header('User-Agent', uagent)
 
     try:
         response = urlopen(request)
-        content = response.read()
-    except (HTTPError, URLError, socket.error,
-            socket.sslerror) as e:
+        encoding = response.info().get_param('charset', 'utf8')
+        content = response.read().decode(encoding)
+    except (HTTPError, URLError, SocketError, SSLError) as e:
         raise SubRedditError(e)
 
     return content

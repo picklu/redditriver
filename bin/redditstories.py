@@ -13,10 +13,12 @@
 import re
 import sys
 import datetime
-import socket
 import time
 from bs4 import BeautifulSoup
 from dateutil import parser as dtp
+from socket import error as SocketError
+from socket import setdefaulttimeout
+from ssl import SSLError
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -26,7 +28,7 @@ version = "3.0"
 reddit_url = 'https://www.reddit.com'
 subreddit_url = 'https://www.reddit.com/r'
 
-socket.setdefaulttimeout(60)
+setdefaulttimeout(30)
 
 class RedesignError(Exception):
     """ An exception class thrown when it seems that Reddit has redesigned """
@@ -158,10 +160,10 @@ def _get_page(url):
     request.add_header('User-Agent', uagent)
 
     try:
-        response = urlopen(request).read()
-        content = response.decode("utf-8")
-    except (HTTPError, URLError, socket.error,
-            socket.sslerror) as e:
+        response = urlopen(request)
+        encoding = response.info().get_param('charset', 'utf8')
+        content = response.read().decode(encoding)
+    except (HTTPError, URLError, SocketError, SSLError) as e:
         raise StoryError(e)
 
     return content

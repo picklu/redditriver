@@ -22,14 +22,16 @@ chdir(cwd) # change the path to the directory of this file
 sys.path.append(path.dirname(cwd))
 import re
 import time
-import socket
+from socket import error as SocketError
+from socket import setdefaulttimeout
+from ssl import SSLError
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup, NavigableString
 from config import riverconfig as config
 
-socket.setdefaulttimeout(15)
+setdefaulttimeout(15)
 
 version = "3.0"
 
@@ -74,7 +76,8 @@ class AutoDiscovery:
                     continue
 
                 try:
-                    command, data = re.split(r'\s+|\t+', line, 1)
+                    pattern = r'\s+|\t+' if type(line) == str else b'\s+|\t+'
+                    command, data = re.split(pattern, line, 1)
                 except ValueError:
                     raise AutoDiscoveryError(f"Unknown line: {line} while parsing {config_file}")
 
@@ -254,16 +257,21 @@ class AutoDiscovery:
 
     def _get_page(self, url):
         """ Gets and returns a web page at url """
+        url = url.decode("utf-8") if type(url) == bytes else url
         timestr = time.strftime("%Y%m%d-%H%M%S")
-        uagent = f"picklus redditriver: 0.1-{timestr}"
+        uagent = f"picklus redditriver: 0.3-{timestr}"
         request = Request(url)
         request.add_header('User-Agent', uagent)
 
         try:
-            content = urlopen(request).read()
-            return content.decode("utf-8")
-        except (HTTPError, URLError, socket.error, socket.sslerror) as e:
+            response = urlopen(request) 
+            encoding = response.info().get_param('charset', 'utf8')
+            content = response.read().decode(encoding) 
+        except (HTTPError, UnicodeDecodeError, URLError, SocketError, 
+                SSLError) as e:
             raise AutoDiscoveryError(e)
+        
+        return content
 
 
 if __name__ == "__main__":

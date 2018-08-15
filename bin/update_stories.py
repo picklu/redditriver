@@ -18,7 +18,6 @@ import time
 import fcntl
 import redditstories
 import autodiscovery
-from itertools import count
 from sqlite3 import dbapi2 as sqlite
 
 sys.path.append(sys.path[0] + '/../config')
@@ -82,7 +81,7 @@ def main():
             print(f"Serious error while getting {subreddit['reddit_name']}: {e}!")
             continue
 
-        for position, story in zip(count(1), stories):
+        for position, story in enumerate(stories, 1):
             story['position'] = position
             story['subreddit_id'] = subreddit['id']
             cur.execute("SELECT id, position FROM stories WHERE subreddit_id = ? AND title = ? AND url = ?",
@@ -106,15 +105,16 @@ def main():
             story['url_mobile'] = ""
             if do_autodiscovery:
                 try:
+                    url = story['url']
+                    url = url.decode("utf-8") if type(url) == bytes else url
                     if autodiscdebug:
-                        print(f"Autodiscovering '{story['url']}'")
+                        print(f"Autodiscovering '{url}'")
                     autodisc = autodiscovery.AutoDiscovery()
-                    story['url_mobile'] = autodisc.autodiscover(story['url'])
-                    if autodiscdebug:
-                        if story['url_mobile']:
-                            print(f"Autodiscovered '{story['url_mobile']}'")
-                        else:
-                            print("Did not autodiscover anything!")
+                    story['url_mobile'] = autodisc.autodiscover(url)
+                    if story['url_mobile']:
+                        print(f"Autodiscovered '{story['url_mobile']}'")
+                    else:
+                        print("Did not autodiscover anything!")
                 except (autodiscovery.AutoDiscoveryError, UnicodeEncodeError) as e:
                     if autodiscdebug:
                         print(f"Failed autodiscovering: {e}")
