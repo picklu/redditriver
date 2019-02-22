@@ -6,9 +6,6 @@ web.py (0.38) and Cheetah (2.4.4) template engine.
 The initial commit contains the full source code of http://redditriver.com website, which
 is available at http://catonmat.net/blog/designing-redditriver-dot-com-website
 
-**The app in its current form is running at
-      - http://jvanalysis.com:8081/
-
 This directory contains:
 ------------------------
 ###bin 
